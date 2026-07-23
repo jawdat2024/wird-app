@@ -608,8 +608,21 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <button class="tab" data-p="settings"><span class="ico">⚙️</span>Settings</button>
 </nav>
 
+<script>
+window.addEventListener('error', function(e) {
+  if (e.message && (e.message.includes('module') || e.message.includes('import') || e.message.includes('fetch') || e.message.includes('resolve') || e.message.includes('Script error'))) {
+    console.error("Module import or fetch error:", e.message, e);
+    const ld = document.getElementById("loading");
+    if (ld) {
+      ld.innerHTML = `Couldn't connect. Check your internet and try again.<br><br><button class="btn gold" style="margin-top:16px" onclick="location.reload()">Retry</button>`;
+      ld.style.color = "var(--ivory)";
+    }
+  }
+});
+</script>
+
 <script type="module">
-import { initializeApp } from "firebase/app";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -623,7 +636,7 @@ import {
   linkWithPopup,
   EmailAuthProvider,
   signOut 
-} from "firebase/auth";
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { 
   getFirestore, 
   doc, 
@@ -633,7 +646,7 @@ import {
   getDocs,
   writeBatch,
   deleteDoc
-} from "firebase/firestore";
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA7eGFicHqUZTVJkxqIHjPUZePqdRJ3B9o",
@@ -1895,6 +1908,36 @@ if ('mediaSession' in navigator) {
   document.getElementById("main").style.display="block";
   setInterval(()=>{renderHero();reminderTick()},20000); // live countdown + reminders
   setInterval(renderDate,60000);
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              const t = document.getElementById('toast');
+              t.innerHTML = `New version available — <button class="btn gold" style="padding:4px 12px; font-size:12px; margin-left:8px; border-radius:12px; display:inline-block;" onclick="updateSW()">Refresh</button>`;
+              t.classList.add('show');
+              // keep it visible by clearing the timer if we are using toastTimer
+              if (typeof toastTimer !== 'undefined') clearTimeout(toastTimer);
+              window.updateSW = () => {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              };
+            }
+          });
+        }
+      });
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
 })();
 </script>
 </body>
