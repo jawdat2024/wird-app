@@ -189,6 +189,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 .page{display:none}
 .page.active{display:block;animation:fadeUp .25s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
+.fade-in-up{animation:fadeInUp 0.6s ease backwards}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .loading{text-align:center;color:var(--mist);padding:60px 0;font-size:14px}
 .perm-note{font-size:12px;color:var(--mist);line-height:1.5;margin-top:10px}
@@ -256,10 +258,41 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 .qr-skel-line:nth-child(3) { width: 95%; }
 .qr-skel-line:nth-child(4) { width: 85%; }
 @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+/* Quran Listen CSS */
+.quran-tabs { display: flex; gap: 8px; background: rgba(11,29,27,0.6); padding: 4px; border-radius: 14px; margin-bottom: 20px; }
+.qtab { flex: 1; padding: 10px; border-radius: 10px; background: transparent; color: var(--mist); border: none; font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+.qtab.active { background: var(--brass); color: #12231F; }
+.ql-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.ql-item { background: rgba(198,161,91,0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(198,161,91,0.1); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
+.ql-item:hover { background: rgba(198,161,91,0.1); }
+.ql-item h3 { margin: 0 0 4px 0; font-size: 16px; color: var(--ivory); }
+.ql-item p { margin: 0; font-size: 13px; color: var(--mist); }
+.ql-ctrl { background: transparent; border: none; color: var(--ivory); cursor: pointer; width: 48px; height: 48px; display: flex; justify-content: center; align-items: center; border-radius: 24px; transition: all 0.2s; }
+.ql-ctrl:hover { background: rgba(255,255,255,0.05); }
+.ql-ctrl svg { width: 28px; height: 28px; fill: currentColor; }
+.ql-play-btn svg { width: 36px; height: 36px; fill: currentColor; }
+#ql-seek { -webkit-appearance: none; height: 6px; border-radius: 3px; background: rgba(198,161,91,0.2); outline: none; }
+#ql-seek::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--brass); cursor: pointer; }
+
 </style>
 </head>
 <body>
 <div id="toast"></div>
+
+<!-- WELCOME OVERLAY -->
+<div id="welcome-overlay" class="qr-overlay" style="display:none; flex-direction:column; justify-content:center; padding: 24px; z-index: 10001; background: var(--night);">
+  <div class="card" style="max-width: 400px; margin: 0 auto; width: 100%; text-align: center; border: none; background: transparent; box-shadow: none;">
+    <div class="logo fade-in-up" style="margin-bottom: 24px; font-size: 56px; color: var(--brass);">وِرد<small style="display:block; margin-top: 4px; font-size: 16px;">WIRD</small></div>
+    <h1 class="fade-in-up" style="font-family: 'Amiri', serif; margin-bottom: 12px; font-size: 28px; animation-delay: 0.1s; color: var(--ivory);">Welcome to Wird<br>أهلاً بك في وِرد</h1>
+    <div class="fade-in-up" style="margin-bottom: 40px; color: var(--mist); font-size: 15px; animation-delay: 0.2s;">Start your journey — your daily worship companion<br><span style="font-family: 'Amiri', serif; font-size: 18px; display:block; margin-top:8px;">ابدأ رحلتك — رفيقك اليومي للعبادة</span></div>
+    
+    <div class="fade-in-up" style="display: flex; flex-direction: column; gap: 12px; animation-delay: 0.3s;">
+      <button class="btn gold" id="btnWelcomeSignIn" style="width: 100%; justify-content: center; font-size: 16px; padding: 14px;">Sign in</button>
+      <button class="btn" id="btnWelcomeSignUp" style="width: 100%; justify-content: center; background: transparent; border: 1px solid var(--brass); color: var(--brass); font-size: 16px; padding: 14px;">Create account</button>
+      <button class="btn" id="btnWelcomeGuest" style="width: 100%; justify-content: center; background: transparent; border: none; color: var(--mist); font-size: 14px; padding: 14px;">Continue as guest</button>
+    </div>
+  </div>
+</div>
 
 <!-- AUTH OVERLAY -->
 <div id="auth-overlay" class="qr-overlay" style="display:none; flex-direction:column; justify-content:center; padding: 24px; z-index: 10000; background: rgba(11,29,27,0.95); backdrop-filter: blur(12px);">
@@ -411,6 +444,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 
   <!-- QURAN -->
   <section class="page" id="page-quran">
+  <div class="quran-tabs">
+    <button class="qtab active" id="qtab-read" onclick="setQuranTab('read')">Read / قراءة</button>
+    <button class="qtab" id="qtab-listen" onclick="setQuranTab('listen')">Listen / استماع</button>
+  </div>
+  
+  <div id="quran-read-view">
     <div class="card">
       <h2>Today's reading</h2>
       <div class="pages-ctl">
@@ -430,6 +469,49 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
         <button class="btn" id="khatmahReset">Start new khatmah</button>
       </div>
     </div>
+  </div>
+  
+  <div id="quran-listen-view" style="display:none">
+     <div id="ql-reciter-sel">
+        <h2 style="font-family:'Manrope',sans-serif; margin-bottom:12px; color:var(--ivory);">Select Reciter</h2>
+        <input type="text" id="ql-reciter-search" class="s-input" placeholder="Search reciters..." style="width:100%; margin-bottom:12px">
+        <div id="ql-reciter-list" class="ql-list"></div>
+     </div>
+     
+     <div id="ql-surah-sel" style="display:none">
+        <button class="btn" id="ql-back-reciter" style="margin-bottom:12px; background:transparent; border:1px solid var(--brass); color:var(--brass); padding:8px 16px; border-radius:12px; font-weight:600;" onclick="showListenReciters()">← Back to Reciters</button>
+        <h2 id="ql-reciter-name" style="font-family:'Manrope',sans-serif; margin-bottom:16px; color:var(--ivory);"></h2>
+        <div id="ql-surah-list" class="ql-list"></div>
+     </div>
+     
+     <div id="ql-player-view" style="display:none" class="card">
+        <button class="btn" id="ql-back-surah" style="margin-bottom:12px; font-size:12px; padding:6px 12px; background:transparent; border:1px solid var(--brass); color:var(--brass); border-radius:12px; font-weight:600;" onclick="showListenSurahs()">← Change Surah</button>
+        <div style="text-align:center; padding: 20px 0;">
+           <h2 id="ql-playing-surah" style="font-family:'Amiri',serif; font-size:32px; color:var(--brass); margin-bottom:4px">سورة</h2>
+           <div id="ql-playing-reciter" style="color:var(--mist); font-size:16px; margin-bottom:24px">Reciter</div>
+           
+           <div class="seek-wrap" style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
+             <span id="ql-time-cur" style="font-size:12px; color:var(--mist); width:40px; text-align:right">0:00</span>
+             <input type="range" id="ql-seek" min="0" max="100" value="0" style="flex:1">
+             <span id="ql-time-tot" style="font-size:12px; color:var(--mist); width:40px; text-align:left">0:00</span>
+           </div>
+           
+           <div class="player-controls" style="display:flex; justify-content:center; align-items:center; gap:24px">
+             <button id="ql-prev" class="ql-ctrl"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+             <button id="ql-play" class="ql-ctrl ql-play-btn" style="width:72px;height:72px; border-radius:36px; background:var(--brass); color:#12231F; border:none; display:flex; justify-content:center; align-items:center">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+             </button>
+             <button id="ql-next" class="ql-ctrl"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+           </div>
+           
+           <div style="margin-top:24px">
+             <label style="display:flex; align-items:center; justify-content:center; gap:8px; color:var(--mist); font-size:14px; cursor:pointer;">
+                <input type="checkbox" id="ql-repeat"> Repeat Surah
+             </label>
+           </div>
+        </div>
+     </div>
+  </div>
   </section>
 
   <!-- SADAQAH -->
@@ -486,6 +568,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
         <div class="switch" id="sw-notif-adhkar"></div>
       </div>
       <div class="perm-note" id="notifStatus"></div>
+    </div>
+    <div class="card" id="athan-voice-card">
+      <h2>Athan voice <span class="sub">صوت الأذان</span></h2>
+      <div id="athan-voice-list" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
     <div class="card">
       <h2>Location &amp; prayer times</h2>
@@ -557,9 +643,7 @@ const firebaseConfig = {
   messagingSenderId: "300106896712",
   appId: "1:300106896712:web:bb669231b1c0c220cccf7d"
 };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app, "ai-studio-17c0b662-8370-4add-8de0-a545a80c3fc5");
+let app, auth, db;
 
 /* ================= data ================= */
 const PRAYERS=[["فجر","Fajr"],["ظهر","Dhuhr"],["عصر","Asr"],["مغرب","Maghrib"],["عشاء","Isha"]];
@@ -800,13 +884,54 @@ function qrPrev() {
 }
 
 /* ================= toast & notifications ================= */
+let toastTimer;
 function toast(msg){
-  const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),3200);
+  const t=document.getElementById("toast");
+  t.innerHTML=msg;t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"),3200);
 }
-function notify(title,body,tag){
+
+let currentAthanAudio = null;
+window.stopAthan = () => {
+  if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
+  document.getElementById("toast").classList.remove("show");
+};
+
+function playPrayerAthan(msg) {
+  if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
+  const v = S.settings.athanVoice || "makkah";
+  let voice = ATHAN_VOICES.find(x => x.id === v);
+  if (!voice) voice = ATHAN_VOICES[7];
+  
+  currentAthanAudio = new Audio(voice.file);
+  currentAthanAudio.play().catch(e => {
+    if(v !== 'tone') {
+       currentAthanAudio = new Audio(ATHAN_VOICES[7].file);
+       currentAthanAudio.play().catch(err=>console.log(err));
+    }
+  });
+  
+  const t = document.getElementById("toast");
+  t.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+      <div>${msg}</div>
+      <button class="btn gold" style="padding:4px 12px; font-size:12px; border-radius:12px" onclick="stopAthan()">Stop</button>
+    </div>
+  `;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  
+  currentAthanAudio.onended = stopAthan;
+}
+
+function notify(title,body,tag,isPrayer){
   if(notified[tag])return;notified[tag]=true;
-  toast(title+" — "+body);
+  if (isPrayer && S.settings.notif) {
+     playPrayerAthan(title + " — " + body);
+  } else {
+     toast(title+" — "+body);
+  }
   if(S.settings.notif&&"Notification"in window&&Notification.permission==="granted"){
     try{new Notification(title,{body,tag})}catch(e){}
   }
@@ -817,7 +942,7 @@ function reminderTick(){
   if(S.settings.notifPrayer){
     [["Fajr","فجر"],["Dhuhr","ظهر"],["Asr","عصر"],["Maghrib","مغرب"],["Isha","عشاء"]].forEach(([en,ar])=>{
       const t=TIMES[en];
-      if(n>=t&&n<t+2)notify("🕌 "+en+" time","حان وقت صلاة ال"+ar,tk+"-"+en);
+      if(n>=t&&n<t+2)notify("🕌 "+en+" time","حان وقت صلاة ال"+ar,tk+"-"+en,true);
     });
   }
   if(S.settings.notifAdhkar){
@@ -986,6 +1111,60 @@ function renderSadaqah(){
     if(customContainer) customContainer.style.display = "flex";
   }
 }
+const ATHAN_VOICES = [
+  {id:"makkah",     name:"Makkah Haram",        ar:"أذان الحرم المكي",   file:"assets/athan/makkah.mp3"},
+  {id:"madinah",    name:"Madinah Haram",       ar:"أذان الحرم المدني",  file:"assets/athan/madinah.mp3"},
+  {id:"abdulbasit", name:"Abdul Basit",         ar:"عبد الباسط عبد الصمد", file:"assets/athan/abdulbasit.mp3"},
+  {id:"minshawi",   name:"Al-Minshawi",         ar:"محمد صديق المنشاوي",  file:"assets/athan/minshawi.mp3"},
+  {id:"afasy",      name:"Mishary Al-Afasy",    ar:"مشاري راشد العفاسي",  file:"assets/athan/afasy.mp3"},
+  {id:"aqsa",       name:"Al-Aqsa Mosque",      ar:"المسجد الأقصى",      file:"assets/athan/aqsa.mp3"},
+  {id:"dubai",      name:"Dubai, UAE",          ar:"أذان دبي",           file:"assets/athan/dubai.mp3"},
+  {id:"tone",       name:"Simple tone",         ar:"تنبيه بسيط",         file:"assets/athan/tone.mp3"},
+];
+let currentAthanPreview = null;
+
+function renderAthanVoices() {
+  const v = S.settings.athanVoice || "makkah";
+  const list = document.getElementById("athan-voice-list");
+  if (!list) return;
+  let html = "";
+  ATHAN_VOICES.forEach(voice => {
+    const active = voice.id === v;
+    html += `
+    <div class="ql-item ${active ? 'active-athan' : ''}" style="cursor:default; border-color:${active?'var(--brass)':'rgba(198,161,91,0.1)'}; background:${active?'rgba(198,161,91,0.1)':'rgba(198,161,91,0.05)'};">
+      <div style="flex:1; cursor:pointer" onclick="selectAthanVoice('${voice.id}')">
+        <h3 style="color:${active?'var(--brass)':'var(--ivory)'}; margin:0 0 4px 0; font-size:16px;">${voice.name}</h3>
+        <p style="margin:0; font-size:13px; color:var(--mist);">${voice.ar}</p>
+      </div>
+      <button class="ql-ctrl" style="background:${active?'var(--brass)':'rgba(255,255,255,0.1)'}; color:#12231F; width:36px; height:36px; border-radius:18px; border:none; display:flex; justify-content:center; align-items:center; cursor:pointer;" onclick="previewAthanVoice('${voice.id}')">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+window.selectAthanVoice = (id) => {
+  S.settings.athanVoice = id;
+  save();
+  renderAthanVoices();
+};
+
+window.previewAthanVoice = (id) => {
+  if(currentAthanPreview) { currentAthanPreview.pause(); currentAthanPreview = null; }
+  const voice = ATHAN_VOICES.find(v => v.id === id);
+  if(!voice) return;
+  currentAthanPreview = new Audio(voice.file);
+  currentAthanPreview.play().catch(e => {
+    if(id !== 'tone') {
+       S.settings.athanVoice = 'tone'; save(); renderAthanVoices();
+       currentAthanPreview = new Audio(ATHAN_VOICES[7].file);
+       currentAthanPreview.play().catch(e=>console.log(e));
+    }
+  });
+  setTimeout(() => { if(currentAthanPreview) { currentAthanPreview.pause(); currentAthanPreview=null; } }, 10000);
+};
+
 function renderSettings(){
   const st=S.settings;
   document.getElementById("sw-notif").classList.toggle("on",st.notif);
@@ -999,6 +1178,7 @@ function renderSettings(){
   } else {
     ns.textContent = "";
   }
+  renderAthanVoices();
 }
 function refreshTimes(){
   TIMES=computeTimes(new Date(),S.settings.lat,S.settings.lng,S.settings.tz);
@@ -1196,69 +1376,133 @@ window.syncToCloud = function() {
   }
 };
 
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  const accName = document.getElementById('accountName');
-  const accEmail = document.getElementById('accountEmail');
-  const btnIn = document.getElementById('btnSignInPrompt');
-  const btnOut = document.getElementById('btnSignOut');
-  
-  if (user) {
-    if (user.isAnonymous) {
-      if(accName) accName.textContent = "Guest";
-      if(accEmail) accEmail.textContent = "Progress is saved locally. Sign in to sync across devices.";
-      if(btnIn) btnIn.style.display = "block";
-      if(btnOut) btnOut.style.display = "none";
-    } else {
-      if(accName) accName.textContent = user.displayName || "Wird User";
-      if(accEmail) accEmail.textContent = user.email;
-      if(btnIn) btnIn.style.display = "none";
-      if(btnOut) btnOut.style.display = "block";
-    }
+let authReadyResolver = null;
+const authReadyPromise = new Promise(r => authReadyResolver = r);
+let initialAuthFired = false;
+
+function setupFirebase() {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app, "ai-studio-17c0b662-8370-4add-8de0-a545a80c3fc5");
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    const accName = document.getElementById('accountName');
+    const accEmail = document.getElementById('accountEmail');
+    const btnIn = document.getElementById('btnSignInPrompt');
+    const btnOut = document.getElementById('btnSignOut');
     
-    try {
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        const d = docSnap.data();
-        S = { ...S, ...d, settings: { ...S.settings, ...(d.settings || {}) } };
-        if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
-        try{localStorage.setItem("wird-data", JSON.stringify(S))}catch(e){}
-        
-        renderDate();refreshTimes();
-        renderStreak();renderWeek();renderSwitches();
-        renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
+    if (user) {
+      if (user.isAnonymous) {
+        if(accName) accName.textContent = "Guest";
+        if(accEmail) accEmail.textContent = "Progress is saved locally. Sign in to sync across devices.";
+        if(btnIn) btnIn.style.display = "block";
+        if(btnOut) btnOut.style.display = "none";
       } else {
-        window.syncToCloud();
+        if(accName) accName.textContent = user.displayName || "Wird User";
+        if(accEmail) accEmail.textContent = user.email;
+        if(btnIn) btnIn.style.display = "none";
+        if(btnOut) btnOut.style.display = "block";
       }
-    } catch(e) {
-      console.error("Firestore load error", e);
+      
+      try {
+        const docSnap = await getDoc(doc(db, "users", user.uid));
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          S = { ...S, ...d, settings: { ...S.settings, ...(d.settings || {}) } };
+          if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
+          try{localStorage.setItem("wird-data", JSON.stringify(S))}catch(e){}
+          
+          if (initialAuthFired) {
+            renderDate();refreshTimes();
+            renderStreak();renderWeek();renderSwitches();
+            renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
+          }
+        } else {
+          if (typeof window.syncToCloud === 'function') window.syncToCloud();
+        }
+      } catch(e) {
+        console.error("Firestore load error", e);
+      }
+      
+      if (!initialAuthFired) {
+        initialAuthFired = true;
+        authReadyResolver();
+      }
+    } else {
+      if(accName) accName.textContent = "Loading...";
+      if(accEmail) accEmail.textContent = "";
+      if(btnIn) btnIn.style.display = "none";
+      if(btnOut) btnOut.style.display = "none";
+      
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("welcome-overlay").style.display = "flex";
+      
+      if (!initialAuthFired) {
+        initialAuthFired = true;
+        authReadyResolver();
+      }
     }
-  } else {
-    if(accName) accName.textContent = "Loading...";
-    if(accEmail) accEmail.textContent = "";
-    if(btnIn) btnIn.style.display = "none";
-    if(btnOut) btnOut.style.display = "none";
-    
-    signInAnonymously(auth).catch(e => {
-      console.warn("Anonymous auth disabled or failed. Using offline mode.", e.message);
-      toast("Offline mode active");
-    });
-  }
-});
+  }, (error) => {
+      console.warn("Auth state error", error);
+      if (!initialAuthFired) {
+        initialAuthFired = true;
+        authReadyResolver();
+      }
+  });
+}
 
 function bindAuth() {
   const overlay = document.getElementById('auth-overlay');
+  const welcomeOverlay = document.getElementById('welcome-overlay');
   const closeBtn = document.getElementById('authClose');
   const btnInPrompt = document.getElementById('btnSignInPrompt');
   const btnOut = document.getElementById('btnSignOut');
   const errDiv = document.getElementById('authError');
   
+  if (document.getElementById('btnWelcomeSignIn')) {
+    document.getElementById('btnWelcomeSignIn').onclick = () => {
+      welcomeOverlay.style.display = 'none';
+      overlay.style.display = 'flex';
+      closeBtn.style.display = 'block';
+    };
+    document.getElementById('btnWelcomeSignUp').onclick = () => {
+      welcomeOverlay.style.display = 'none';
+      overlay.style.display = 'flex';
+      closeBtn.style.display = 'block';
+    };
+    document.getElementById('btnWelcomeGuest').onclick = async () => {
+      welcomeOverlay.style.display = 'none';
+      try {
+        await signInAnonymously(auth);
+      } catch(e) {
+        console.warn("Anonymous auth disabled or failed.", e.message);
+        toast("Offline mode active");
+      }
+    };
+  }
+  
   btnInPrompt.onclick = () => { overlay.style.display = 'flex'; };
-  closeBtn.onclick = () => { overlay.style.display = 'none'; };
-  document.getElementById('btnGuestAuth').onclick = () => { overlay.style.display = 'none'; };
+  closeBtn.onclick = () => {
+    overlay.style.display = 'none';
+    if (!auth.currentUser) {
+      welcomeOverlay.style.display = 'flex';
+    }
+  };
+  document.getElementById('btnGuestAuth').onclick = async () => {
+    overlay.style.display = 'none';
+    if (!auth.currentUser) {
+      try {
+        await signInAnonymously(auth);
+      } catch(e) {
+        console.warn("Anonymous auth failed.", e.message);
+        toast("Offline mode active");
+      }
+    }
+  };
   
   btnOut.onclick = async () => {
-    if(confirm("Sign out? You will be signed in as a guest.")) {
+    if(confirm("Sign out?")) {
       await signOut(auth);
       S={days:{},khatmah:0,sadaqah:[],settings:S.settings,reader:{currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: 0}};
       try{localStorage.setItem("wird-data",JSON.stringify(S))}catch(e){}
@@ -1319,9 +1563,331 @@ function bindAuth() {
 }
 bindAuth();
 
+// --- FEATURE 2: Quran Listen ---
+const SURAHS = [
+  {ar:"الفاتحة",en:"Al-Fatihah"},{ar:"البقرة",en:"Al-Baqarah"},{ar:"آل عمران",en:"Aal-Imran"},
+  {ar:"النساء",en:"An-Nisa"},{ar:"المائدة",en:"Al-Ma'idah"},{ar:"الأنعام",en:"Al-An'am"},
+  {ar:"الأعراف",en:"Al-A'raf"},{ar:"الأنفال",en:"Al-Anfal"},{ar:"التوبة",en:"At-Tawbah"},
+  {ar:"يونس",en:"Yunus"},{ar:"هود",en:"Hud"},{ar:"يوسف",en:"Yusuf"},{ar:"الرعد",en:"Ar-Ra'd"},
+  {ar:"إبراهيم",en:"Ibrahim"},{ar:"الحجر",en:"Al-Hijr"},{ar:"النحل",en:"An-Nahl"},
+  {ar:"الإسراء",en:"Al-Isra"},{ar:"Al-Kahf",en:"Al-Kahf"},{ar:"مريم",en:"Maryam"},
+  {ar:"طه",en:"Taha"},{ar:"الأنبياء",en:"Al-Anbiya"},{ar:"الحج",en:"Al-Hajj"},
+  {ar:"المؤمنون",en:"Al-Mu'minun"},{ar:"النور",en:"An-Nur"},{ar:"الفرقان",en:"Al-Furqan"},
+  {ar:"الشعراء",en:"Ash-Shu'ara"},{ar:"النمل",en:"An-Naml"},{ar:"القصص",en:"Al-Qasas"},
+  {ar:"العنكبوت",en:"Al-Ankabut"},{ar:"الروم",en:"Ar-Rum"},{ar:"لقمان",en:"Luqman"},
+  {ar:"السجدة",en:"As-Sajdah"},{ar:"الأحزاب",en:"Al-Ahzab"},{ar:"سبأ",en:"Saba"},
+  {ar:"فاطر",en:"Fatir"},{ar:"يس",en:"Ya-Sin"},{ar:"الصافات",en:"As-Saffat"},
+  {ar:"ص",en:"Sad"},{ar:"الزمر",en:"Az-Zumar"},{ar:"غافر",en:"Ghafir"},
+  {ar:"فصلت",en:"Fussilat"},{ar:"الشورى",en:"Ash-Shura"},{ar:"الزخرف",en:"Az-Zukhruf"},
+  {ar:"الدخان",en:"Ad-Dukhan"},{ar:"الجاثية",en:"Al-Jathiyah"},{ar:"الأحقاف",en:"Al-Ahqaf"},
+  {ar:"محمد",en:"Muhammad"},{ar:"الفتح",en:"Al-Fath"},{ar:"الحجرات",en:"Al-Hujurat"},
+  {ar:"ق",en:"Qaf"},{ar:"الذاريات",en:"Ad-Dhariyat"},{ar:"الطور",en:"At-Tur"},
+  {ar:"النجم",en:"An-Najm"},{ar:"القمر",en:"Al-Qamar"},{ar:"الرحمن",en:"Ar-Rahman"},
+  {ar:"الواقعة",en:"Al-Waqi'ah"},{ar:"الحديد",en:"Al-Hadid"},{ar:"المجادلة",en:"Al-Mujadila"},
+  {ar:"الحشر",en:"Al-Hashr"},{ar:"الممتحنة",en:"Al-Mumtahanah"},{ar:"الصف",en:"As-Saff"},
+  {ar:"الجمعة",en:"Al-Jumu'ah"},{ar:"المنافقون",en:"Al-Munafiqun"},{ar:"التغابن",en:"At-Taghabun"},
+  {ar:"الطلاق",en:"At-Talaq"},{ar:"التحريم",en:"At-Tahrim"},{ar:"الملك",en:"Al-Mulk"},
+  {ar:"القلم",en:"Al-Qalam"},{ar:"الحاقة",en:"Al-Haqqah"},{ar:"المعارج",en:"Al-Ma'arij"},
+  {ar:"نوح",en:"Nuh"},{ar:"الجن",en:"Al-Jinn"},{ar:"المزمل",en:"Al-Muzzammil"},
+  {ar:"المدثر",en:"Al-Muddaththir"},{ar:"القيامة",en:"Al-Qiyamah"},{ar:"الإنسان",en:"Al-Insan"},
+  {ar:"المرسلات",en:"Al-Mursalat"},{ar:"النبأ",en:"An-Naba"},{ar:"النازعات",en:"An-Nazi'at"},
+  {ar:"عبس",en:"Abasa"},{ar:"التكوير",en:"At-Takwir"},{ar:"الانفطار",en:"Al-Infitar"},
+  {ar:"المطففين",en:"Al-Mutaffifin"},{ar:"الانشقاق",en:"Al-Inshiqaq"},{ar:"البروج",en:"Al-Buruj"},
+  {ar:"الطارق",en:"At-Tariq"},{ar:"الأعلى",en:"Al-A'la"},{ar:"الغاشية",en:"Al-Ghashiyah"},
+  {ar:"الفجر",en:"Al-Fajr"},{ar:"البلد",en:"Al-Balad"},{ar:"الشمس",en:"Ash-Shams"},
+  {ar:"الليل",en:"Al-Layl"},{ar:"الضحى",en:"Ad-Duhaa"},{ar:"الشرح",en:"Ash-Sharh"},
+  {ar:"التين",en:"At-Tin"},{ar:"العلق",en:"Al-Alaq"},{ar:"القدر",en:"Al-Qadr"},
+  {ar:"البينة",en:"Al-Bayyinah"},{ar:"الزلزلة",en:"Az-Zalzalah"},{ar:"العاديات",en:"Al-Adiyat"},
+  {ar:"القارعة",en:"Al-Qari'ah"},{ar:"التكاثر",en:"At-Takathur"},{ar:"العصر",en:"Al-Asr"},
+  {ar:"الهمزة",en:"Al-Humazah"},{ar:"الفيل",en:"Al-Fil"},{ar:"قريش",en:"Quraysh"},
+  {ar:"الماعون",en:"Al-Ma'un"},{ar:"الكوثر",en:"Al-Kawthar"},{ar:"الكافرون",en:"Al-Kafirun"},
+  {ar:"النصر",en:"An-Nasr"},{ar:"المسد",en:"Al-Masad"},{ar:"الإخلاص",en:"Al-Ikhlas"},
+  {ar:"الفلق",en:"Al-Falaq"},{ar:"الناس",en:"An-Nas"}
+];
+
+let qAudio = new Audio();
+let qlReciters = null;
+let qlSearch = "";
+let qlState = { reciter: null, surah: 1, repeat: false };
+
+window.setQuranTab = (tab) => {
+  document.getElementById('qtab-read').classList.toggle('active', tab==='read');
+  document.getElementById('qtab-listen').classList.toggle('active', tab==='listen');
+  document.getElementById('quran-read-view').style.display = tab==='read' ? 'block' : 'none';
+  document.getElementById('quran-listen-view').style.display = tab==='listen' ? 'block' : 'none';
+  if(tab==='listen') initListenTab();
+};
+
+async function initListenTab() {
+  if(!S.listener) S.listener = {reciterId: null, moshafId: null, server: null, surah: 1, time: 0};
+  
+  if (S.listener.reciterId) {
+    if (S.listener.server) {
+       qlState.reciter = {
+          id: S.listener.reciterId,
+          nameAr: S.listener.nameAr || "",
+          nameEn: S.listener.nameEn || "",
+          moshaf: [{id: S.listener.moshafId, server: S.listener.server}]
+       };
+       qlState.surah = S.listener.surah || 1;
+       showListenPlayer();
+       return;
+    }
+  }
+  showListenReciters();
+}
+
+async function fetchReciters() {
+  if (qlReciters) return qlReciters;
+  try {
+    const [arRes, enRes] = await Promise.all([
+      fetch("https://mp3quran.net/api/v3/reciters?language=ar").then(r=>r.json()),
+      fetch("https://mp3quran.net/api/v3/reciters?language=eng").then(r=>r.json())
+    ]);
+    const arList = arRes.reciters;
+    const enList = enRes.reciters;
+    const pinned = ["Al-Minshawi", "Nasser Al Qatami", "Al-Dosari", "Ayyub", "Ali Jaber", "Al-Hussary"];
+    
+    let merged = arList.map(ar => {
+      const en = enList.find(e => e.id === ar.id);
+      return { id: ar.id, nameAr: ar.name, nameEn: en ? en.name : ar.name, moshaf: ar.moshaf };
+    });
+    
+    merged.sort((a,b) => {
+      const aPin = pinned.findIndex(p => a.nameEn.includes(p) || a.nameAr.includes(p));
+      const bPin = pinned.findIndex(p => b.nameEn.includes(p) || b.nameAr.includes(p));
+      if(aPin !== -1 && bPin !== -1) return aPin - bPin;
+      if(aPin !== -1) return -1;
+      if(bPin !== -1) return 1;
+      return a.nameEn.localeCompare(b.nameEn);
+    });
+    qlReciters = merged;
+    return merged;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+window.showListenReciters = async () => {
+  document.getElementById('ql-reciter-sel').style.display = 'block';
+  document.getElementById('ql-surah-sel').style.display = 'none';
+  document.getElementById('ql-player-view').style.display = 'none';
+  
+  const listDiv = document.getElementById('ql-reciter-list');
+  if(!qlReciters) {
+     listDiv.innerHTML = '<div class="loading">Loading reciters...</div>';
+     const r = await fetchReciters();
+     if(!r) {
+       listDiv.innerHTML = '<div class="loading">Failed to load reciters. Check internet.<br><br><button class="btn" onclick="showListenReciters()">Retry</button></div>';
+       return;
+     }
+  }
+  renderReciterList();
+};
+
+function renderReciterList() {
+  const listDiv = document.getElementById('ql-reciter-list');
+  const q = qlSearch.toLowerCase();
+  let html = '';
+  qlReciters.forEach(rec => {
+    if(!rec.nameEn.toLowerCase().includes(q) && !rec.nameAr.includes(q)) return;
+    html += `<div class="ql-item" onclick="selectReciter(${rec.id})">
+      <div><h3>${rec.nameEn}</h3><p>${rec.nameAr}</p></div>
+    </div>`;
+  });
+  listDiv.innerHTML = html;
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'ql-reciter-search') {
+    qlSearch = e.target.value;
+    if(qlReciters) renderReciterList();
+  }
+});
+
+window.selectReciter = (id) => {
+  qlState.reciter = qlReciters.find(r => r.id === id);
+  showListenSurahs();
+};
+
+window.showListenSurahs = () => {
+  document.getElementById('ql-reciter-sel').style.display = 'none';
+  document.getElementById('ql-surah-sel').style.display = 'block';
+  document.getElementById('ql-player-view').style.display = 'none';
+  
+  document.getElementById('ql-reciter-name').textContent = qlState.reciter.nameEn;
+  
+  let html = '';
+  SURAHS.forEach((s, idx) => {
+    const sNum = idx + 1;
+    html += `<div class="ql-item" onclick="selectListenSurah(${sNum})">
+      <div style="display:flex; align-items:center; gap:16px">
+         <div style="color:var(--brass); font-weight:700">${sNum}</div>
+         <div><h3>${s.en}</h3><p>${s.ar}</p></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('ql-surah-list').innerHTML = html;
+};
+
+window.selectListenSurah = (sNum) => {
+  qlState.surah = sNum;
+  if (!S.listener) S.listener = {};
+  S.listener.reciterId = qlState.reciter.id;
+  S.listener.nameAr = qlState.reciter.nameAr;
+  S.listener.nameEn = qlState.reciter.nameEn;
+  S.listener.moshafId = qlState.reciter.moshaf[0].id;
+  S.listener.server = qlState.reciter.moshaf[0].server;
+  S.listener.surah = sNum;
+  save();
+  
+  showListenPlayer();
+  playListenAudio();
+};
+
+function showListenPlayer() {
+  document.getElementById('ql-reciter-sel').style.display = 'none';
+  document.getElementById('ql-surah-sel').style.display = 'none';
+  document.getElementById('ql-player-view').style.display = 'block';
+  
+  const sData = SURAHS[qlState.surah - 1];
+  document.getElementById('ql-playing-surah').textContent = sData.ar + " · " + sData.en;
+  document.getElementById('ql-playing-reciter').textContent = qlState.reciter.nameEn;
+  
+  updateListenPlayBtn();
+}
+
+function fmtTime(sec) {
+  if (isNaN(sec)) return "0:00";
+  const m = Math.floor(sec/60);
+  const s = Math.floor(sec%60);
+  return m + ":" + (s<10?'0':'') + s;
+}
+
+function playListenAudio() {
+  const surahStr = String(qlState.surah).padStart(3, '0');
+  let srv = qlState.reciter.moshaf[0].server;
+  if (!srv.endsWith('/')) srv += '/';
+  
+  qAudio.src = srv + surahStr + '.mp3';
+  if (S.listener && S.listener.time && S.listener.surah === qlState.surah) {
+    qAudio.currentTime = S.listener.time;
+  } else if (S.listener) {
+    S.listener.time = 0;
+  }
+  qAudio.play().catch(e => console.log("Auto-play prevented", e));
+  
+  // Media session metadata
+  if ('mediaSession' in navigator) {
+    const sData = SURAHS[qlState.surah - 1];
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'Surah ' + sData.en,
+      artist: qlState.reciter.nameEn,
+      album: 'Wird',
+      artwork: [{ src: '/icon.png', sizes: '192x192', type: 'image/png' }]
+    });
+  }
+}
+
+function updateListenPlayBtn() {
+  const btn = document.getElementById('ql-play');
+  if (qAudio.paused) {
+     btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+  } else {
+     btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+  }
+}
+
+qAudio.addEventListener('play', updateListenPlayBtn);
+qAudio.addEventListener('pause', updateListenPlayBtn);
+qAudio.addEventListener('timeupdate', () => {
+  document.getElementById('ql-time-cur').textContent = fmtTime(qAudio.currentTime);
+  if(qAudio.duration) {
+     document.getElementById('ql-time-tot').textContent = fmtTime(qAudio.duration);
+     document.getElementById('ql-seek').value = (qAudio.currentTime / qAudio.duration) * 100;
+  }
+  // save periodically
+  if(Math.floor(qAudio.currentTime) % 10 === 0) {
+     if (S.listener) S.listener.time = qAudio.currentTime;
+     save();
+  }
+});
+qAudio.addEventListener('loadedmetadata', () => {
+  document.getElementById('ql-time-tot').textContent = fmtTime(qAudio.duration);
+});
+qAudio.addEventListener('ended', () => {
+  if (qlState.repeat) {
+    qAudio.currentTime = 0;
+    qAudio.play();
+  } else {
+    playListenNext();
+  }
+});
+
+document.getElementById('ql-seek').addEventListener('input', e => {
+  if(qAudio.duration) {
+     qAudio.currentTime = (e.target.value / 100) * qAudio.duration;
+  }
+});
+
+document.getElementById('ql-play').addEventListener('click', () => {
+  if(qAudio.paused) {
+     if(!qAudio.getAttribute('src')) playListenAudio();
+     else qAudio.play();
+  } else qAudio.pause();
+});
+
+window.playListenNext = () => {
+  if (qlState.surah < 114) {
+    window.selectListenSurah(qlState.surah + 1);
+  }
+};
+window.playListenPrev = () => {
+  if (qlState.surah > 1) {
+    window.selectListenSurah(qlState.surah - 1);
+  }
+};
+
+document.getElementById('ql-next').addEventListener('click', playListenNext);
+document.getElementById('ql-prev').addEventListener('click', playListenPrev);
+document.getElementById('ql-repeat').addEventListener('change', e => { qlState.repeat = e.target.checked; });
+
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => qAudio.play());
+  navigator.mediaSession.setActionHandler('pause', () => qAudio.pause());
+  navigator.mediaSession.setActionHandler('previoustrack', playListenPrev);
+  navigator.mediaSession.setActionHandler('nexttrack', playListenNext);
+}
+// --- END FEATURE 2 ---
+
 /* ================= init ================= */
 (async function(){
   await load();
+  
+  let timeoutId;
+  try {
+    const timeoutPromise = new Promise((_, rej) => {
+      timeoutId = setTimeout(() => rej(new Error("Timeout")), 10000);
+    });
+    setupFirebase();
+    await Promise.race([authReadyPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
+  } catch (e) {
+    clearTimeout(timeoutId);
+    console.error("Firebase init/auth error:", e);
+    const hasLocalData = !!localStorage.getItem("wird-data");
+    if (!hasLocalData) {
+      const ld = document.getElementById("loading");
+      ld.innerHTML = `Couldn't connect. Check your internet and try again.<br><br><button class="btn gold" style="margin-top:16px" onclick="location.reload()">Retry</button>`;
+      ld.style.color = "var(--ivory)";
+      return; // STOP execution
+    } else {
+      console.warn("Falling back to local data");
+      toast("Offline mode active");
+    }
+  }
+
   renderDate();refreshTimes();
   renderStreak();renderWeek();renderSwitches();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
