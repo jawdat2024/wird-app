@@ -471,6 +471,26 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 }
 .hz-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); color: var(--brass-soft); }
 
+/* Language picker */
+.lang-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.lang-chip {
+  padding: 9px 13px; border-radius: 11px; cursor: pointer; text-align: center;
+  background: var(--deep); border: 1px solid var(--edge); min-width: 84px;
+  transition: background .2s, border-color .2s;
+}
+.lang-chip .nat { display: block; font-size: 15px; color: var(--ivory); font-family: 'Amiri', serif; }
+.lang-chip .lbl { display: block; font-size: 10px; letter-spacing: .1em; color: var(--mist); text-transform: uppercase; margin-top: 2px; }
+.lang-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); }
+.lang-chip.sel .nat { color: var(--brass-soft); }
+
+/* RTL adjustments — only what direction alone doesn't solve */
+html[dir="rtl"] .dateline { text-align: left; }
+html[dir="rtl"] .hz-page-num,
+html[dir="rtl"] .hc-event-day { text-align: center; }
+html[dir="rtl"] .jm-check::after { transform: rotate(45deg); }
+html[dir="rtl"] .wp-entry .arrow { transform: scaleX(-1); }
+html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
+
 </style>
 </head>
 <body>
@@ -624,12 +644,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
     <div class="dateline" id="dateline"></div>
   </header>
 
-  <div id="loading" class="loading">Loading your wird…</div>
+  <div id="loading" class="loading" data-i18n="app.loading">Loading your wird…</div>
 
   <div id="main" style="display:none">
 
   <div class="hero">
-    <div class="eyebrow">Next prayer</div>
+    <div class="eyebrow" data-i18n="today.next">Next prayer</div>
     <div class="np"><span class="name ar" id="npName">—</span><span class="time" id="npTime">—</span></div>
     <div class="countdown" id="npCountdown"></div>
     <div class="greet" id="greet"></div>
@@ -638,7 +658,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <div class="statsband">
     <div class="streak">
       <div class="num" id="streakNum">0</div>
-      <div class="lbl">day streak<br>all 5 prayers 🔥</div>
+      <div class="lbl"><span data-i18n="today.streak">day streak</span><br><span data-i18n="today.all5">all 5 prayers</span> 🔥</div>
     </div>
     <div class="week" id="weekStrip" title="Last 7 days"></div>
   </div>
@@ -659,21 +679,21 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       <div class="jm-saah" id="jumuahSaah"></div>
     </div>
     <div class="card">
-      <h2>Prayers <span class="sub" id="prayerCount">0 / 5</span></h2>
+      <h2><span data-i18n="today.prayers">Prayers</span> <span class="sub" id="prayerCount">0 / 5</span></h2>
       <div id="prayerList"></div>
     </div>
     <div class="card">
-      <h2>Today's habits</h2>
+      <h2 data-i18n="today.habits">Today's habits</h2>
       <div class="row">
-        <div><div class="t">Morning adhkar</div><div class="d">أذكار الصباح</div></div>
+        <div><div class="t" data-i18n="today.morning">Morning adhkar</div><div class="d">أذكار الصباح</div></div>
         <div class="switch" id="sw-morning"></div>
       </div>
       <div class="row">
-        <div><div class="t">Evening adhkar</div><div class="d">أذكار المساء</div></div>
+        <div><div class="t" data-i18n="today.evening">Evening adhkar</div><div class="d">أذكار المساء</div></div>
         <div class="switch" id="sw-evening"></div>
       </div>
       <div class="row">
-        <div><div class="t">Fasting today</div><div class="d" id="fastHint">صيام</div></div>
+        <div><div class="t" data-i18n="today.fasting">Fasting today</div><div class="d" id="fastHint">صيام</div></div>
         <div class="switch" id="sw-fasting"></div>
       </div>
     </div>
@@ -716,9 +736,9 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <!-- QURAN -->
   <section class="page" id="page-quran">
   <div class="quran-tabs">
-    <button class="qtab active" id="qtab-read" onclick="setQuranTab('read')">Read / قراءة</button>
-    <button class="qtab" id="qtab-listen" onclick="setQuranTab('listen')">Listen / استماع</button>
-    <button class="qtab" id="qtab-hifz" onclick="setQuranTab('hifz')">Hifz / حفظ</button>
+    <button class="qtab active" id="qtab-read" onclick="setQuranTab('read')" data-i18n="quran.read">Read</button>
+    <button class="qtab" id="qtab-listen" onclick="setQuranTab('listen')" data-i18n="quran.listen">Listen</button>
+    <button class="qtab" id="qtab-hifz" onclick="setQuranTab('hifz')" data-i18n="quran.hifz">Hifz</button>
   </div>
 
   <div id="quran-hifz-view" style="display:none">
@@ -728,7 +748,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
           <div class="hz-plan-name" id="hzName">—</div>
           <div class="hz-plan-sub" id="hzRange">—</div>
         </div>
-        <button class="hz-act" id="hzDelete">Delete</button>
+        <button class="hz-act" id="hzDelete" data-i18n="common.delete">Delete</button>
       </div>
       <div class="hz-bar"><div class="hz-fill" id="hzFill" style="width:0%"></div></div>
       <div class="hz-stats"><span id="hzCount">0 / 0 pages</span><span id="hzPct">0%</span></div>
@@ -738,21 +758,21 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       </div>
     </div>
     <div class="card" id="hifzSwitchCard" style="display:none">
-      <div class="hz-label">Your plans</div>
+      <div class="hz-label" data-i18n="hifz.yourPlans">Your plans</div>
       <div class="hz-switcher" id="hzSwitcher"></div>
     </div>
     <div class="card">
-      <h2 id="hifzFormTitle">New hifz plan</h2>
+      <h2 id="hifzFormTitle" data-i18n="hifz.newPlan">New hifz plan</h2>
       <div class="hz-empty" id="hifzEmptyNote">
         <span class="ar">﴿ وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ ﴾</span>
-        <div class="d">Pick a juz, or set your own page range, and Wird will pace it for you.</div>
+        <div class="d" data-i18n="hifz.hint">Pick a juz, or set your own page range, and Wird will pace it for you.</div>
       </div>
       <div class="hz-field">
-        <div class="hz-label">Choose a juz</div>
+        <div class="hz-label" data-i18n="hifz.chooseJuz">Choose a juz</div>
         <div class="hz-juz-wrap" id="hzJuzWrap"></div>
       </div>
       <div class="hz-field">
-        <div class="hz-label">Or a page range</div>
+        <div class="hz-label" data-i18n="hifz.orRange">Or a page range</div>
         <div class="hz-range">
           <input type="number" class="s-input" id="hzFrom" min="1" max="604" placeholder="From">
           <span>→</span>
@@ -760,14 +780,14 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
         </div>
       </div>
       <div class="hz-field">
-        <div class="hz-label">Pages per day</div>
+        <div class="hz-label" data-i18n="hifz.perDay">Pages per day</div>
         <div class="pages-ctl">
           <button class="btn round" id="hzPerMinus">−</button>
           <div class="pv" id="hzPerVal">1</div>
           <button class="btn round" id="hzPerPlus">+</button>
         </div>
       </div>
-      <button class="btn gold" id="hzCreate" style="width:100%">Start plan</button>
+      <button class="btn gold" id="hzCreate" style="width:100%" data-i18n="hifz.start">Start plan</button>
     </div>
   </div>
   
@@ -839,7 +859,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <!-- SADAQAH -->
   <section class="page" id="page-sadaqah">
     <div class="card">
-      <h2>Support Us <span class="sub">help keep Wird ad-free</span></h2>
+      <h2><span data-i18n="support.title">Support Us</span> <span class="sub" data-i18n="support.sub">help keep Wird ad-free</span></h2>
       <div id="supportChips" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
         <div class="chips" style="margin-bottom: 0;">
           <div class="chip support-chip" data-amt="5">5 AED</div>
@@ -862,7 +882,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       <div class="wp-entry-mark">وِرد</div>
       <div style="flex:1">
         <div class="t">Wird Plus</div>
-        <div class="d">A recurring way to support development</div>
+        <div class="d" data-i18n="plus.subSupport">A recurring way to support development</div>
       </div>
       <div class="arrow">›</div>
     </div>
@@ -870,16 +890,20 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 
   <!-- SETTINGS -->
   <section class="page" id="page-settings">
+    <div class="card">
+      <h2 data-i18n="set.language">Language</h2>
+      <div class="lang-wrap" id="langPicker"></div>
+    </div>
     <div class="card wp-entry" id="plusEntrySettings">
       <div class="wp-entry-mark">وِرد</div>
       <div style="flex:1">
         <div class="t">Wird Plus</div>
-        <div class="d">Extras that support the app — worship stays free</div>
+        <div class="d" data-i18n="plus.subSettings">Extras that support the app — worship stays free</div>
       </div>
       <div class="arrow">›</div>
     </div>
     <div class="card">
-      <h2>Account</h2>
+      <h2 data-i18n="set.account">Account</h2>
       <div class="row" style="align-items: center;">
          <div id="accountInfo">
            <div class="t" id="accountName">Loading...</div>
@@ -892,17 +916,17 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       </div>
     </div>
     <div class="card">
-      <h2>Reminders</h2>
+      <h2 data-i18n="set.reminders">Reminders</h2>
       <div class="row">
-        <div><div class="t">Enable notifications</div><div class="d">Prayer times + adhkar reminders</div></div>
+        <div><div class="t" data-i18n="set.enableNotif">Enable notifications</div><div class="d" data-i18n="set.notifSub">Prayer times + adhkar reminders</div></div>
         <div class="switch" id="sw-notif"></div>
       </div>
       <div class="row">
-        <div><div class="t">Prayer time alerts</div><div class="d">At each prayer time</div></div>
+        <div><div class="t" data-i18n="set.prayerAlerts">Prayer time alerts</div><div class="d" data-i18n="set.atEach">At each prayer time</div></div>
         <div class="switch" id="sw-notif-prayer"></div>
       </div>
       <div class="row">
-        <div><div class="t">Adhkar reminders</div><div class="d">After Fajr &amp; after Asr</div></div>
+        <div><div class="t" data-i18n="set.adhkarRem">Adhkar reminders</div><div class="d">After Fajr &amp; after Asr</div></div>
         <div class="switch" id="sw-notif-adhkar"></div>
       </div>
       <div class="perm-note" id="notifStatus"></div>
@@ -929,7 +953,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       <div class="small-note">pages per day target</div>
     </div>
     <div class="card">
-      <h2>Data</h2>
+      <h2 data-i18n="set.data">Data</h2>
       <div class="tasbih-controls">
         <button class="btn danger" id="wipeData">Reset all data</button>
       </div>
@@ -939,11 +963,11 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 </div>
 
 <nav>
-  <button class="tab active" data-p="today"><span class="ico">🕌</span>Today</button>
-  <button class="tab" data-p="adhkar"><span class="ico">📿</span>Adhkar</button>
-  <button class="tab" data-p="quran"><span class="ico">📖</span>Quran</button>
-  <button class="tab" data-p="sadaqah"><span class="ico">💛</span>Support</button>
-  <button class="tab" data-p="settings"><span class="ico">⚙️</span>Settings</button>
+  <button class="tab active" data-p="today"><span class="ico">🕌</span><span data-i18n="nav.today">Today</span></button>
+  <button class="tab" data-p="adhkar"><span class="ico">📿</span><span data-i18n="nav.adhkar">Adhkar</span></button>
+  <button class="tab" data-p="quran"><span class="ico">📖</span><span data-i18n="nav.quran">Quran</span></button>
+  <button class="tab" data-p="sadaqah"><span class="ico">💛</span><span data-i18n="nav.support">Support</span></button>
+  <button class="tab" data-p="settings"><span class="ico">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
 </nav>
 
 <script>
@@ -1024,7 +1048,7 @@ const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 /* ================= state ================= */
 let S={days:{},khatmah:0,sadaqah:[],settings:{
   lat:24.13,lng:55.80,tz:4,locName:"Al Ain, UAE",
-  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark'
+  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en'
 },reader:{currentPage:1,furthestPageCounted:0,lastReadTimestamp:0}};
 
 let ui={session:"morning",seqIdx:0,seqCount:0};
@@ -1040,7 +1064,7 @@ async function load(){
     const val=localStorage.getItem("wird-data");
     if(val){
       const d=JSON.parse(val);
-      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',...S.settings,...(d.settings||{})}};
+      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',...S.settings,...(d.settings||{})}};
       if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
     }
   }catch(e){/* first run */}
@@ -1438,6 +1462,126 @@ function renderHijriCal(){
 }
 function openHijriCal(){hcCursor=new Date();renderHijriCal();document.getElementById("hijri-cal").style.display="flex"}
 function closeHijriCal(){document.getElementById("hijri-cal").style.display="none"}
+
+/* ================= i18n =================
+   UI chrome only. Quranic text, adhkar, duas and dhikr are never
+   translated — they stay in their authentic Arabic wherever they appear. */
+const LANGS=[
+  {id:"en",label:"English",native:"English",rtl:false},
+  {id:"ar",label:"Arabic",native:"العربية",rtl:true},
+  {id:"ur",label:"Urdu",native:"اردو",rtl:true},
+  {id:"fil",label:"Filipino",native:"Filipino",rtl:false},
+  {id:"es",label:"Spanish",native:"Español",rtl:false}
+];
+const I18N={
+  "nav.today":      ["Today","اليوم","آج","Ngayon","Hoy"],
+  "nav.adhkar":     ["Adhkar","الأذكار","اذکار","Adhkar","Adhkar"],
+  "nav.quran":      ["Quran","القرآن","قرآن","Quran","Corán"],
+  "nav.support":    ["Support","الدعم","معاونت","Suporta","Apoyo"],
+  "nav.settings":   ["Settings","الإعدادات","ترتیبات","Mga Setting","Ajustes"],
+  "app.loading":    ["Loading your wird…","جارٍ تحميل وِردك…","آپ کا ورد لوڈ ہو رہا ہے…","Nilo-load ang iyong wird…","Cargando tu wird…"],
+  "today.next":     ["Next prayer","الصلاة القادمة","اگلی نماز","Susunod na dasal","Próxima oración"],
+  "today.streak":   ["day streak","يوم متتالٍ","دن مسلسل","araw na sunod-sunod","días seguidos"],
+  "today.all5":     ["all 5 prayers","الصلوات الخمس","پانچوں نمازیں","lahat ng 5 dasal","las 5 oraciones"],
+  "today.prayers":  ["Prayers","الصلوات","نمازیں","Mga Dasal","Oraciones"],
+  "today.habits":   ["Today's habits","أعمال اليوم","آج کے اعمال","Mga gawain ngayon","Hábitos de hoy"],
+  "today.morning":  ["Morning adhkar","أذكار الصباح","صبح کے اذکار","Adhkar sa umaga","Adhkar de la mañana"],
+  "today.evening":  ["Evening adhkar","أذكار المساء","شام کے اذکار","Adhkar sa gabi","Adhkar de la tarde"],
+  "today.fasting":  ["Fasting today","صيام اليوم","آج کا روزہ","Pag-aayuno ngayon","Ayuno de hoy"],
+  "today.tasbih":   ["Tasbih","التسبيح","تسبیح","Tasbih","Tasbih"],
+  "today.afterPrayer":["after-prayer dhikr","ذكر بعد الصلاة","نماز کے بعد ذکر","dhikr pagkatapos ng dasal","dhikr tras la oración"],
+  "today.nextDhikr":["Next dhikr","الذكر التالي","اگلا ذکر","Susunod na dhikr","Siguiente dhikr"],
+  "common.reset":   ["Reset","إعادة","دوبارہ","I-reset","Reiniciar"],
+  "common.delete":  ["Delete","حذف","حذف کریں","Tanggalin","Eliminar"],
+  "common.read":    ["Read","قراءة","پڑھیں","Basahin","Leer"],
+  "common.test":    ["Test","اختبار","امتحان","Subukan","Prueba"],
+  "adhkar.list":    ["Adhkar checklist","قائمة الأذكار","اذکار کی فہرست","Listahan ng adhkar","Lista de adhkar"],
+  "adhkar.morning": ["Morning","الصباح","صبح","Umaga","Mañana"],
+  "adhkar.evening": ["Evening","المساء","شام","Gabi","Tarde"],
+  "quran.read":     ["Read","قراءة","پڑھیں","Basahin","Leer"],
+  "quran.listen":   ["Listen","استماع","سنیں","Makinig","Escuchar"],
+  "quran.hifz":     ["Hifz","حفظ","حفظ","Hifz","Hifz"],
+  "quran.todaysReading":["Today's reading","قراءة اليوم","آج کی تلاوت","Pagbasa ngayon","Lectura de hoy"],
+  "quran.khatmah":  ["Khatmah progress","تقدّم الختمة","ختمہ کی پیش رفت","Progreso ng khatmah","Progreso de la khatmah"],
+  "quran.continue": ["Continue reading","متابعة القراءة","پڑھنا جاری رکھیں","Magpatuloy sa pagbasa","Continuar leyendo"],
+  "quran.newKhatmah":["Start new khatmah","بدء ختمة جديدة","نیا ختمہ شروع کریں","Magsimula ng bagong khatmah","Iniciar nueva khatmah"],
+  "quran.selectReciter":["Select Reciter","اختر القارئ","قاری منتخب کریں","Pumili ng Reciter","Elegir recitador"],
+  "quran.reciter":  ["Reciter","القارئ","قاری","Reciter","Recitador"],
+  "quran.repeat":   ["Repeat Surah","تكرار السورة","سورہ دہرائیں","Ulitin ang Surah","Repetir sura"],
+  "hifz.newPlan":   ["New hifz plan","خطة حفظ جديدة","نیا حفظ منصوبہ","Bagong hifz plan","Nuevo plan de hifz"],
+  "hifz.addPlan":   ["Add another plan","إضافة خطة أخرى","ایک اور منصوبہ شامل کریں","Magdagdag ng plano","Añadir otro plan"],
+  "hifz.chooseJuz": ["Choose a juz","اختر جزءاً","جزو منتخب کریں","Pumili ng juz","Elige un yuz"],
+  "hifz.orRange":   ["Or a page range","أو نطاق صفحات","یا صفحات کی حد","O saklaw ng pahina","O un rango de páginas"],
+  "hifz.perDay":    ["Pages per day","صفحات في اليوم","روزانہ صفحات","Pahina bawat araw","Páginas por día"],
+  "hifz.start":     ["Start plan","ابدأ الخطة","منصوبہ شروع کریں","Simulan ang plano","Iniciar plan"],
+  "hifz.portion":   ["Today's portion","ورد اليوم","آج کا حصہ","Bahagi ngayon","Porción de hoy"],
+  "hifz.yourPlans": ["Your plans","خططك","آپ کے منصوبے","Mga plano mo","Tus planes"],
+  "hifz.hint":      ["Pick a juz, or set your own page range, and Wird will pace it for you.","اختر جزءاً أو حدّد نطاق صفحات، ووِرد ينظّم لك الوتيرة.","ایک جزو منتخب کریں یا صفحات کی حد مقرر کریں، ورد آپ کے لیے رفتار طے کرے گا۔","Pumili ng juz o itakda ang saklaw ng pahina, at ise-set ng Wird ang bilis para sa iyo.","Elige un yuz o define tu rango de páginas y Wird marcará el ritmo."],
+  "support.title":  ["Support Us","ادعمنا","ہماری معاونت کریں","Suportahan kami","Apóyanos"],
+  "support.sub":    ["help keep Wird ad-free","ساعد في إبقاء وِرد بلا إعلانات","ورد کو اشتہارات سے پاک رکھنے میں مدد کریں","tulungan kaming panatilihing walang ads ang Wird","ayuda a mantener Wird sin anuncios"],
+  "plus.subSettings":["Extras that support the app — worship stays free","إضافات تدعم التطبيق — والعبادات تبقى مجانية","ایپ کی معاونت کرنے والی اضافی سہولیات — عبادات مفت رہیں گی","Mga extra na sumusuporta sa app — libre pa rin ang pagsamba","Extras que apoyan la app — la adoración sigue siendo gratis"],
+  "plus.subSupport":["A recurring way to support development","طريقة متكررة لدعم التطوير","ترقی کی معاونت کا مستقل طریقہ","Paraan ng regular na suporta sa development","Una forma recurrente de apoyar el desarrollo"],
+  "set.account":    ["Account","الحساب","اکاؤنٹ","Account","Cuenta"],
+  "set.signOut":    ["Sign out","تسجيل الخروج","سائن آؤٹ","Mag-sign out","Cerrar sesión"],
+  "set.signIn":     ["Sign in","تسجيل الدخول","سائن ان","Mag-sign in","Iniciar sesión"],
+  "set.reminders":  ["Reminders","التذكيرات","یاد دہانیاں","Mga paalala","Recordatorios"],
+  "set.enableNotif":["Enable notifications","تفعيل الإشعارات","اطلاعات فعال کریں","I-enable ang notifications","Activar notificaciones"],
+  "set.notifSub":   ["Prayer times + adhkar reminders","أوقات الصلاة وتذكير الأذكار","نماز کے اوقات اور اذکار کی یاد دہانی","Oras ng dasal + paalala ng adhkar","Horarios de oración y adhkar"],
+  "set.prayerAlerts":["Prayer time alerts","تنبيهات أوقات الصلاة","نماز کے اوقات کی اطلاع","Alerto sa oras ng dasal","Avisos de oración"],
+  "set.atEach":     ["At each prayer time","عند كل وقت صلاة","ہر نماز کے وقت","Sa bawat oras ng dasal","En cada oración"],
+  "set.adhkarRem":  ["Adhkar reminders","تذكير الأذكار","اذکار کی یاد دہانی","Paalala ng adhkar","Recordatorios de adhkar"],
+  "set.athanVoice": ["Athan voice","صوت الأذان","اذان کی آواز","Boses ng athan","Voz del adhan"],
+  "set.location":   ["Location & prayer times","الموقع وأوقات الصلاة","مقام اور نماز کے اوقات","Lokasyon at oras ng dasal","Ubicación y horarios"],
+  "set.useGps":     ["Use my GPS","استخدام GPS","میرا GPS استعمال کریں","Gamitin ang GPS ko","Usar mi GPS"],
+  "set.quranGoal":  ["Quran goal","هدف القرآن","قرآن کا ہدف","Layunin sa Quran","Meta del Corán"],
+  "set.goalSub":    ["pages per day target","هدف الصفحات يومياً","روزانہ صفحات کا ہدف","target na pahina bawat araw","páginas por día"],
+  "set.data":       ["Data","البيانات","ڈیٹا","Data","Datos"],
+  "set.resetAll":   ["Reset all data","مسح جميع البيانات","تمام ڈیٹا حذف کریں","I-reset lahat ng data","Borrar todos los datos"],
+  "set.language":   ["Language","اللغة","زبان","Wika","Idioma"],
+  "jm.title":       ["Jumu'ah","الجمعة","جمعہ","Jumu'ah","Yumu'ah"]
+};
+function langIndex(){
+  const id=(S.settings&&S.settings.lang)||"en";
+  const i=LANGS.findIndex(l=>l.id===id);
+  return i<0?0:i;
+}
+function t(key){
+  const row=I18N[key];
+  if(!row)return key;
+  return row[langIndex()]||row[0];
+}
+function isRTL(){return !!LANGS[langIndex()].rtl}
+function applyI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k=el.getAttribute("data-i18n");
+    if(I18N[k])el.textContent=t(k);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    const k=el.getAttribute("data-i18n-ph");
+    if(I18N[k])el.placeholder=t(k);
+  });
+  const lang=LANGS[langIndex()];
+  document.documentElement.setAttribute("lang",lang.id);
+  document.documentElement.setAttribute("dir",lang.rtl?"rtl":"ltr");
+}
+function setLang(id){
+  if(!LANGS.some(l=>l.id===id))return;
+  S.settings.lang=id;
+  save();
+  applyI18n();
+  renderLangPicker();
+  if(typeof renderJumuah==="function")renderJumuah();
+  if(typeof renderHifz==="function"){renderHifzForm();renderHifz()}
+}
+function renderLangPicker(){
+  const box=document.getElementById("langPicker");
+  if(!box)return;
+  const cur=LANGS[langIndex()].id;
+  box.innerHTML=LANGS.map(l=>
+    '<div class="lang-chip'+(l.id===cur?" sel":"")+'" data-lang="'+l.id+'">'
+    +'<span class="nat">'+l.native+'</span><span class="lbl">'+l.label+'</span></div>').join("");
+  box.querySelectorAll(".lang-chip").forEach(c=>c.onclick=()=>setLang(c.dataset.lang));
+}
 
 /* ================= hifz ================= */
 /* Juz → first page of the 604-page Madani mushaf: juz 1 opens at page 1 and
@@ -2090,6 +2234,7 @@ function setupFirebase() {
           
           if (initialAuthFired) {
             renderDate();refreshTimes();
+            applyI18n();renderLangPicker();
             renderStreak();renderWeek();renderSwitches();renderJumuah();
             renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
           }
@@ -2566,6 +2711,7 @@ if ('mediaSession' in navigator) {
     }
   }
 
+  applyI18n();renderLangPicker();
   renderDate();refreshTimes();
   renderStreak();renderWeek();renderSwitches();renderJumuah();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
