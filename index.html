@@ -326,6 +326,47 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 }
 .hc-disclaimer .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); display: block; margin-top: 5px; }
 
+/* Jumu'ah (Friday) card */
+.jm-card { border-color: rgba(198,161,91,.42); background: linear-gradient(180deg, rgba(198,161,91,.09), transparent 60%), var(--card); }
+.jm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.jm-title-ar { font-family: 'Amiri', serif; font-size: 26px; color: var(--brass-soft); line-height: 1.1; }
+.jm-badge { font-size: 10px; letter-spacing: .16em; color: var(--brass); text-transform: uppercase; white-space: nowrap; }
+.jm-hadith { font-size: 12px; color: var(--mist); line-height: 1.6; margin-bottom: 12px; }
+.jm-hadith .ar { font-family: 'Amiri', serif; font-size: 15px; color: var(--ivory); display: block; margin-bottom: 3px; }
+.jm-hadith .src { color: var(--brass); font-size: 11px; }
+.jm-sunan { display: flex; flex-direction: column; gap: 2px; }
+.jm-row { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--edge); cursor: pointer; }
+.jm-row:first-child { border-top: none; }
+.jm-check {
+  width: 22px; height: 22px; border-radius: 7px; border: 1px solid var(--edge);
+  background: var(--deep); flex-shrink: 0; position: relative; transition: background .2s, border-color .2s;
+}
+.jm-check::after {
+  content: ''; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+  border: solid transparent; border-width: 0 2px 2px 0; transform: rotate(45deg); transition: border-color .2s;
+}
+.jm-row.done .jm-check { background: var(--ok); border-color: var(--ok); }
+.jm-row.done .jm-check::after { border-color: #fff; }
+.jm-txt { flex: 1; min-width: 0; }
+.jm-txt .t { font-size: 14px; color: var(--ivory); }
+.jm-txt .d { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); margin-top: 1px; }
+.jm-row.done .jm-txt .t { color: var(--mist); }
+.jm-go {
+  background: none; border: 1px solid var(--edge); color: var(--brass-soft);
+  border-radius: 9px; padding: 5px 11px; font-size: 11px; cursor: pointer;
+  font-family: 'Manrope', sans-serif; white-space: nowrap; flex-shrink: 0;
+}
+.jm-go:hover { background: var(--edge); }
+.jm-saah {
+  margin-top: 12px; padding: 11px 13px; border-radius: 12px;
+  background: rgba(111,191,155,.10); border: 1px solid rgba(111,191,155,.42);
+}
+.jm-saah.idle { background: rgba(198,161,91,.06); border-color: var(--edge); }
+.jm-saah .t { font-size: 13px; color: var(--ok); font-weight: 600; }
+.jm-saah.idle .t { color: var(--brass-soft); }
+.jm-saah .d { font-size: 12px; color: var(--mist); line-height: 1.6; margin-top: 3px; }
+.jm-saah .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--ivory); }
+
 </style>
 </head>
 <body>
@@ -469,6 +510,19 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 
   <!-- TODAY -->
   <section class="page active" id="page-today">
+    <div class="card jm-card" id="jumuahCard" style="display:none">
+      <div class="jm-head">
+        <div class="jm-title-ar">يوم الجمعة</div>
+        <div class="jm-badge">Jumu'ah</div>
+      </div>
+      <div class="jm-hadith">
+        <span class="ar">خَيْرُ يَوْمٍ طَلَعَتْ عَلَيْهِ الشَّمْسُ يَوْمُ الْجُمُعَةِ</span>
+        The best day on which the sun has risen is Friday.
+        <span class="src">— صحيح مسلم</span>
+      </div>
+      <div class="jm-sunan" id="jumuahSunan"></div>
+      <div class="jm-saah" id="jumuahSaah"></div>
+    </div>
     <div class="card">
       <h2>Prayers <span class="sub" id="prayerCount">0 / 5</span></h2>
       <div id="prayerList"></div>
@@ -938,14 +992,27 @@ async function loadQuranPage(p) {
 }
 
 function openReader() {
+  qrJumpPage = null;
   const qr = document.getElementById("quran-reader");
   qr.style.display = "flex";
   qr.setAttribute("data-theme", S.settings.quranTheme || 'dark');
   loadQuranPage(S.reader.currentPage);
 }
 
+/* Transient reading session (Al-Kahf, hifz, surah jump).
+   Never moves the khatmah bookmark or counts pages. */
+let qrJumpPage = null;
+function openReaderAt(page) {
+  qrJumpPage = Math.max(1, Math.min(QURAN_PAGES, page));
+  const qr = document.getElementById("quran-reader");
+  qr.style.display = "flex";
+  qr.setAttribute("data-theme", S.settings.quranTheme || 'dark');
+  loadQuranPage(qrJumpPage);
+}
+
 function closeReader() {
   document.getElementById("quran-reader").style.display = "none";
+  if (qrJumpPage !== null) { qrJumpPage = null; return; }
   S.reader.lastReadTimestamp = Date.now();
   save();
   renderQuran();
@@ -953,6 +1020,10 @@ function closeReader() {
 }
 
 function qrNext() {
+   if (qrJumpPage !== null) {
+      if (qrJumpPage < QURAN_PAGES) { qrJumpPage++; loadQuranPage(qrJumpPage); }
+      return;
+   }
    if (S.reader.currentPage > S.reader.furthestPageCounted) {
       S.reader.furthestPageCounted = S.reader.currentPage;
       S.khatmah = Math.min(QURAN_PAGES, S.khatmah + 1);
@@ -971,6 +1042,10 @@ function qrNext() {
 }
 
 function qrPrev() {
+   if (qrJumpPage !== null) {
+      if (qrJumpPage > 1) { qrJumpPage--; loadQuranPage(qrJumpPage); }
+      return;
+   }
    if (S.reader.currentPage > 1) {
       S.reader.currentPage--;
       save();
@@ -1157,6 +1232,57 @@ function renderHijriCal(){
 }
 function openHijriCal(){hcCursor=new Date();renderHijriCal();document.getElementById("hijri-cal").style.display="flex"}
 function closeHijriCal(){document.getElementById("hijri-cal").style.display="none"}
+
+/* ================= jumu'ah ================= */
+const KAHF_PAGE=293;
+const JUMUAH_SUNAN=[
+  {k:"ghusl",  ar:"غُسل الجمعة",                  en:"Ghusl before Jumu'ah"},
+  {k:"early",  ar:"التبكير إلى المسجد",            en:"Going early to the masjid"},
+  {k:"kahf",   ar:"قراءة سورة الكهف",              en:"Reading Surah Al-Kahf", page:KAHF_PAGE},
+  {k:"salawat",ar:"الإكثار من الصلاة على النبي ﷺ", en:"Abundant salawat on the Prophet ﷺ"},
+  {k:"dua",    ar:"الدعاء في ساعة الإجابة",        en:"Du'a in the hour of response"}
+];
+function isFriday(d){return (d||new Date()).getDay()===5}
+function jumuahOf(){const t=day();if(!t.jumuah)t.jumuah={};return t.jumuah}
+function renderJumuah(){
+  const card=document.getElementById("jumuahCard");
+  if(!card)return;
+  if(!isFriday()){card.style.display="none";return}
+  card.style.display="";
+  const j=jumuahOf();
+  let html="";
+  JUMUAH_SUNAN.forEach(s=>{
+    html+='<div class="jm-row'+(j[s.k]?" done":"")+'" data-jm="'+s.k+'">'
+      +'<div class="jm-check"></div>'
+      +'<div class="jm-txt"><div class="t">'+s.en+'</div><div class="d">'+s.ar+'</div></div>'
+      +(s.page?'<button class="jm-go" data-jmpage="'+s.page+'">Read</button>':'')
+      +'</div>';
+  });
+  document.getElementById("jumuahSunan").innerHTML=html;
+  document.querySelectorAll("#jumuahSunan .jm-row").forEach(row=>{
+    row.onclick=()=>{const jj=jumuahOf();jj[row.dataset.jm]=!jj[row.dataset.jm];save();renderJumuah()};
+  });
+  document.querySelectorAll("#jumuahSunan .jm-go").forEach(b=>{
+    b.onclick=e=>{e.stopPropagation();openReaderAt(parseInt(b.dataset.jmpage,10))};
+  });
+  renderJumuahSaah();
+}
+function renderJumuahSaah(){
+  const box=document.getElementById("jumuahSaah");
+  if(!box||!isFriday())return;
+  if(!TIMES){box.innerHTML="";return}
+  const n=nowMins(),mg=TIMES.Maghrib,start=mg-60;
+  if(n>=start&&n<mg){
+    box.className="jm-saah";
+    box.innerHTML='<div class="t">ساعة الإجابة — now</div><div class="d">'
+      +'The final hour before Maghrib · <b>'+Math.max(1,Math.ceil(mg-n))+' min</b> left'
+      +'<span class="ar" style="display:block;margin-top:3px">لا يوافقها عبدٌ مسلمٌ يسأل اللهَ شيئاً إلا أعطاه إياه</span></div>';
+  }else{
+    box.className="jm-saah idle";
+    box.innerHTML='<div class="t">ساعة الإجابة</div><div class="d">'
+      +'The last hour before Maghrib — begins around <b>'+fmt(start)+'</b>.</div>';
+  }
+}
 
 function renderHero(){
   if(!TIMES)return;
@@ -1612,7 +1738,7 @@ function setupFirebase() {
           
           if (initialAuthFired) {
             renderDate();refreshTimes();
-            renderStreak();renderWeek();renderSwitches();
+            renderStreak();renderWeek();renderSwitches();renderJumuah();
             renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
           }
         } else {
@@ -2086,11 +2212,11 @@ if ('mediaSession' in navigator) {
   }
 
   renderDate();refreshTimes();
-  renderStreak();renderWeek();renderSwitches();
+  renderStreak();renderWeek();renderSwitches();renderJumuah();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
   document.getElementById("loading").style.display="none";
   document.getElementById("main").style.display="block";
-  setInterval(()=>{renderHero();reminderTick()},20000); // live countdown + reminders
+  setInterval(()=>{renderHero();reminderTick();renderJumuahSaah()},20000); // live countdown + reminders
   setInterval(renderDate,60000);
   
   if ('serviceWorker' in navigator) {
