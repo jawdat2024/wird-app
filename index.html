@@ -1009,6 +1009,17 @@ import {
   writeBatch,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getMessaging,
+  isSupported as isMessagingSupported,
+  getToken as getFcmToken,
+  onMessage
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+
+/* Real VAPID key from Firebase Console → Project settings → Cloud Messaging
+   → Web configuration → Web Push certificates. FCM registration is skipped
+   until this is set. */
+const FCM_VAPID_KEY = "PASTE_VAPID_KEY_HERE";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA7eGFicHqUZTVJkxqIHjPUZePqdRJ3B9o",
@@ -2225,6 +2236,7 @@ function bind(){
     }
     save();renderSettings();
     toast(S.settings.notif?tr("set.notifOnToast"):tr("set.notifOffToast"));
+    registerPushToken();
   };
   document.getElementById("sw-notif-prayer").onclick=()=>{S.settings.notifPrayer=!S.settings.notifPrayer;save();renderSettings()};
   document.getElementById("sw-notif-adhkar").onclick=()=>{S.settings.notifAdhkar=!S.settings.notifAdhkar;save();renderSettings()};
@@ -2371,6 +2383,36 @@ function setupFirebase() {
         authReadyResolver();
       }
   });
+}
+
+/* ================= push notifications (FCM) ================= */
+let swRegistration = null;
+async function registerPushToken() {
+  if (FCM_VAPID_KEY === "PASTE_VAPID_KEY_HERE") return;
+  if (!swRegistration) return;
+  if (!S.settings.notif) return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  if (!currentUser) return;
+  try {
+    const supported = await isMessagingSupported();
+    if (!supported) return;
+    const messaging = getMessaging(app);
+    const token = await getFcmToken(messaging, {
+      vapidKey: FCM_VAPID_KEY,
+      serviceWorkerRegistration: swRegistration
+    });
+    if (token) {
+      await setDoc(doc(db, "users", currentUser.uid), {
+        fcmTokens: { [token]: true }
+      }, { merge: true });
+    }
+    onMessage(messaging, (payload) => {
+      const n = payload.notification || {};
+      if (n.title) toast(n.title + (n.body ? " — " + n.body : ""));
+    });
+  } catch (e) {
+    console.warn("FCM token registration failed:", e.message);
+  }
 }
 
 function bindAuth() {
@@ -2823,6 +2865,8 @@ if ('mediaSession' in navigator) {
   
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').then((reg) => {
+      swRegistration = reg;
+      registerPushToken();
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         if (newWorker) {

@@ -4,5 +4,8 @@
 /
   Cache-Control: no-cache, no-store, must-revalidate
 
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /public/assets/athan/*
   Cache-Control: public, max-age=3600, must-revalidate
