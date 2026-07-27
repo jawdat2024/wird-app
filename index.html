@@ -2051,14 +2051,25 @@ window.selectAthanVoice = (id) => {
   renderAthanVoices();
 };
 
+/* Diagnostic build: surfaces the raw browser error code in the toast itself
+   so a user can report it without opening dev tools. Remove the bracketed
+   suffix once the real cause is confirmed. */
+const MEDIA_ERROR_NAMES = {1:"ABORTED",2:"NETWORK",3:"DECODE",4:"SRC_NOT_SUPPORTED"};
 window.previewAthanVoice = (id) => {
   if(currentAthanPreview) { currentAthanPreview.pause(); currentAthanPreview = null; }
   const voice = ATHAN_VOICES.find(v => v.id === id);
   if(!voice) return;
-  currentAthanPreview = new Audio(voice.file);
-  currentAthanPreview.play().catch(e => {
-    console.warn("Preview failed for "+id+":", e.name, e.message);
-    toast(tr("set.athanPreviewFailed"));
+  const a = new Audio(voice.file);
+  currentAthanPreview = a;
+  a.addEventListener("error", () => {
+    const code = a.error ? a.error.code : 0;
+    const label = MEDIA_ERROR_NAMES[code] || ("code "+code);
+    console.warn("Athan media error for "+id+":", label, a.error && a.error.message);
+    toast(tr("set.athanPreviewFailed")+" ["+label+"]");
+  });
+  a.play().catch(e => {
+    console.warn("Preview play() rejected for "+id+":", e.name, e.message);
+    toast(tr("set.athanPreviewFailed")+" ["+e.name+"]");
   });
   setTimeout(() => { if(currentAthanPreview) { currentAthanPreview.pause(); currentAthanPreview=null; } }, 10000);
 };
