@@ -1246,7 +1246,7 @@ function closeReader() {
   S.reader.lastReadTimestamp = Date.now();
   save();
   renderQuran();
-  toast(t("reader.bookmarkSaved"));
+  toast(tr("reader.bookmarkSaved"));
 }
 
 function qrNext() {
@@ -1266,7 +1266,7 @@ function qrNext() {
       save();
       loadQuranPage(S.reader.currentPage);
    } else {
-      toast(t("reader.khatmahCompleteToast")+" تقبّل الله 🎉");
+      toast(tr("reader.khatmahCompleteToast")+" تقبّل الله 🎉");
       closeReader();
    }
 }
@@ -1362,9 +1362,9 @@ function renderDate(){
   try{hijri=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{day:"numeric",month:"long"}).format(now)}catch(e){}
   document.getElementById("dateline").innerHTML="<b>"+greg+"</b>"+(hijri?hijri+" هـ":"");
   const wd=now.getDay();
-  document.getElementById("fastHint").textContent=(wd===1||wd===4)?tf("today.sunnahFast",{day:t(wd===1?"day.monday":"day.thursday")}):t("today.voluntaryFast");
+  document.getElementById("fastHint").textContent=(wd===1||wd===4)?trf("today.sunnahFast",{day:tr(wd===1?"day.monday":"day.thursday")}):tr("today.voluntaryFast");
   const h=now.getHours();
-  document.getElementById("greet").textContent=h<12?t("today.greetMorning"):h<17?t("today.greetAfternoon"):t("today.greetEvening");
+  document.getElementById("greet").textContent=h<12?tr("today.greetMorning"):h<17?tr("today.greetAfternoon"):tr("today.greetEvening");
 }
 
 /* ================= hijri calendar ================= */
@@ -1498,6 +1498,7 @@ const I18N={
   "adhkar.list":    ["Adhkar checklist","قائمة الأذكار","اذکار کی فہرست","Listahan ng adhkar","Lista de adhkar"],
   "adhkar.morning": ["Morning","الصباح","صبح","Umaga","Mañana"],
   "adhkar.evening": ["Evening","المساء","شام","Gabi","Tarde"],
+  "adhkar.completeToast":["adhkar complete","اكتملت الأذكار","اذکار مکمل ہوگئے","tapos na ang adhkar","adhkar completado"],
   "quran.read":     ["Read","قراءة","پڑھیں","Basahin","Leer"],
   "quran.listen":   ["Listen","استماع","سنیں","Makinig","Escuchar"],
   "quran.hifz":     ["Hifz","حفظ","حفظ","Hifz","Hifz"],
@@ -1614,13 +1615,13 @@ function langIndex(){
   const i=LANGS.findIndex(l=>l.id===id);
   return i<0?0:i;
 }
-function t(key){
+function tr(key){
   const row=I18N[key];
   if(!row)return key;
   return row[langIndex()]||row[0];
 }
-function tf(key,params){
-  let s=t(key);
+function trf(key,params){
+  let s=tr(key);
   if(params)for(const k in params)s=s.split("{"+k+"}").join(params[k]);
   return s;
 }
@@ -1628,11 +1629,11 @@ function isRTL(){return !!LANGS[langIndex()].rtl}
 function applyI18n(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
     const k=el.getAttribute("data-i18n");
-    if(I18N[k])el.textContent=t(k);
+    if(I18N[k])el.textContent=tr(k);
   });
   document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
     const k=el.getAttribute("data-i18n-ph");
-    if(I18N[k])el.placeholder=t(k);
+    if(I18N[k])el.placeholder=tr(k);
   });
   const lang=LANGS[langIndex()];
   document.documentElement.setAttribute("lang",lang.id);
@@ -1672,7 +1673,7 @@ function activePlan(){const h=hifzState();return h.plans.find(p=>p.id===h.active
 /* Name is computed at display time, not baked in at creation, so it
    retranslates immediately when the user switches language. */
 function hifzPlanName(plan){
-  return plan.juz?tf("hz.juzName",{n:plan.juz}):tf("hz.rangeName",{from:plan.from,to:plan.to});
+  return plan.juz?trf("hz.juzName",{n:plan.juz}):trf("hz.rangeName",{from:plan.from,to:plan.to});
 }
 function renderHifzForm(){
   const wrap=document.getElementById("hzJuzWrap");
@@ -1701,14 +1702,14 @@ function renderHifz(){
     });
   }else swCard.style.display="none";
   document.getElementById("hifzEmptyNote").style.display=h.plans.length?"none":"";
-  document.getElementById("hifzFormTitle").textContent=h.plans.length?t("hifz.addPlan"):t("hifz.newPlan");
+  document.getElementById("hifzFormTitle").textContent=h.plans.length?tr("hifz.addPlan"):tr("hifz.newPlan");
   if(!plan){card.style.display="none";return}
   card.style.display="";
   const total=plan.to-plan.from+1,done=plan.done.length,pct=total?Math.round(done/total*100):0;
   document.getElementById("hzName").textContent=hifzPlanName(plan);
-  document.getElementById("hzRange").textContent=tf("hz.rangeSub",{from:plan.from,to:plan.to,per:plan.per});
+  document.getElementById("hzRange").textContent=trf("hz.rangeSub",{from:plan.from,to:plan.to,per:plan.per});
   document.getElementById("hzFill").style.width=pct+"%";
-  document.getElementById("hzCount").textContent=done+" / "+total+" "+t("quran.pagesUnit");
+  document.getElementById("hzCount").textContent=done+" / "+total+" "+tr("quran.pagesUnit");
   document.getElementById("hzPct").textContent=pct+"%";
   const remaining=[];
   for(let p=plan.from;p<=plan.to;p++)if(plan.done.indexOf(p)===-1)remaining.push(p);
@@ -1717,23 +1718,23 @@ function renderHifz(){
   if(plan.done.length)rows.push({p:Math.max.apply(null,plan.done),done:true});
   remaining.slice(0,plan.per).forEach(p=>rows.push({p:p,done:false}));
   if(!remaining.length&&!rows.length){
-    box.innerHTML='<div class="hz-done-note">'+t("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>';
+    box.innerHTML='<div class="hz-done-note">'+tr("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>';
     return;
   }
   box.innerHTML=rows.map(r=>
     '<div class="hz-page-row'+(r.done?" done":"")+'">'
     +'<div class="hz-page-num">'+r.p+'</div>'
-    +'<div class="hz-page-lbl">'+tf("hz.pageLabel",{n:r.p})+(r.done?t("hz.memorised"):"")+'</div>'
-    +'<button class="hz-act" data-hzread="'+r.p+'">'+t("common.read")+'</button>'
-    +'<button class="hz-act" data-hztest="'+r.p+'">'+t("common.test")+'</button>'
+    +'<div class="hz-page-lbl">'+trf("hz.pageLabel",{n:r.p})+(r.done?tr("hz.memorised"):"")+'</div>'
+    +'<button class="hz-act" data-hzread="'+r.p+'">'+tr("common.read")+'</button>'
+    +'<button class="hz-act" data-hztest="'+r.p+'">'+tr("common.test")+'</button>'
     +'<button class="hz-act'+(r.done?" on":"")+'" data-hzdone="'+r.p+'">✓</button>'
     +'</div>').join("")
-    +(remaining.length?"":'<div class="hz-done-note">'+t("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>');
+    +(remaining.length?"":'<div class="hz-done-note">'+tr("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>');
   box.querySelectorAll("[data-hzread]").forEach(b=>b.onclick=()=>openReaderAt(parseInt(b.dataset.hzread,10),false));
   box.querySelectorAll("[data-hztest]").forEach(b=>b.onclick=()=>openReaderAt(parseInt(b.dataset.hztest,10),true));
   box.querySelectorAll("[data-hzdone]").forEach(b=>b.onclick=()=>{
     const pg=parseInt(b.dataset.hzdone,10),pl=activePlan(),i=pl.done.indexOf(pg);
-    if(i===-1){pl.done.push(pg);toast(tf("hz.pageMarked",{n:pg})+" ✓")}else pl.done.splice(i,1);
+    if(i===-1){pl.done.push(pg);toast(trf("hz.pageMarked",{n:pg})+" ✓")}else pl.done.splice(i,1);
     save();renderHifz();
   });
 }
@@ -1744,19 +1745,19 @@ function createHifzPlan(){
   else{
     from=parseInt(document.getElementById("hzFrom").value,10);
     to=parseInt(document.getElementById("hzTo").value,10);
-    if(!from||!to||from<1||to>QURAN_PAGES||from>to){toast(t("hz.checkRange"));return}
+    if(!from||!to||from<1||to>QURAN_PAGES||from>to){toast(tr("hz.checkRange"));return}
   }
   const plan={id:"hz"+Date.now(),juz:juz,from:from,to:to,per:hzForm.per,done:[],created:Date.now()};
   h.plans.push(plan);h.activeId=plan.id;
   hzForm={juz:null,per:1};
   document.getElementById("hzFrom").value="";document.getElementById("hzTo").value="";
   save();renderHifzForm();renderHifz();
-  toast(t("hz.planStarted")+" — بالتوفيق");
+  toast(tr("hz.planStarted")+" — بالتوفيق");
 }
 function deleteHifzPlan(){
   const h=hifzState(),plan=activePlan();
   if(!plan)return;
-  if(!confirm(tf("hz.deleteConfirm",{name:hifzPlanName(plan)})))return;
+  if(!confirm(trf("hz.deleteConfirm",{name:hifzPlanName(plan)})))return;
   h.plans=h.plans.filter(p=>p.id!==plan.id);
   h.activeId=h.plans.length?h.plans[0].id:null;
   save();renderHifzForm();renderHifz();
@@ -1785,11 +1786,11 @@ function renderWirdPlus(){
     +'<div class="d">'+f.d+' <span class="ar">'+f.ar+'</span></div>'
     +'</div></div>').join("");
   if(PLUS_LINK==="PASTE_PLUS_LINK_HERE"){
-    cta.innerHTML='<div class="wp-soon">'+t("wp.preparingTitle")+'<br>'+t("wp.preparingSub")+'</div>';
+    cta.innerHTML='<div class="wp-soon">'+tr("wp.preparingTitle")+'<br>'+tr("wp.preparingSub")+'</div>';
   }else{
     cta.innerHTML='<div class="wp-price"><div class="amt">'+PLUS_PRICE.amount+'</div>'
       +'<div class="per">'+PLUS_PRICE.per+'</div></div>'
-      +'<button class="btn gold wp-cta" id="wpSubscribe">'+t("wp.subscribeCta")+'</button>';
+      +'<button class="btn gold wp-cta" id="wpSubscribe">'+tr("wp.subscribeCta")+'</button>';
     document.getElementById("wpSubscribe").onclick=()=>window.open(PLUS_LINK,"_blank");
   }
 }
@@ -1817,8 +1818,8 @@ function renderJumuah(){
   JUMUAH_SUNAN.forEach(s=>{
     html+='<div class="jm-row'+(j[s.k]?" done":"")+'" data-jm="'+s.k+'">'
       +'<div class="jm-check"></div>'
-      +'<div class="jm-txt"><div class="t">'+t(s.key)+'</div><div class="d">'+s.ar+'</div></div>'
-      +(s.page?'<button class="jm-go" data-jmpage="'+s.page+'">'+t("common.read")+'</button>':'')
+      +'<div class="jm-txt"><div class="t">'+tr(s.key)+'</div><div class="d">'+s.ar+'</div></div>'
+      +(s.page?'<button class="jm-go" data-jmpage="'+s.page+'">'+tr("common.read")+'</button>':'')
       +'</div>';
   });
   document.getElementById("jumuahSunan").innerHTML=html;
@@ -1837,13 +1838,13 @@ function renderJumuahSaah(){
   const n=nowMins(),mg=TIMES.Maghrib,start=mg-60;
   if(n>=start&&n<mg){
     box.className="jm-saah";
-    box.innerHTML='<div class="t">'+t("jm.saahNow")+'</div><div class="d">'
-      +tf("jm.saahDesc",{min:'<b>'+Math.max(1,Math.ceil(mg-n))+'</b>'})
+    box.innerHTML='<div class="t">'+tr("jm.saahNow")+'</div><div class="d">'
+      +trf("jm.saahDesc",{min:'<b>'+Math.max(1,Math.ceil(mg-n))+'</b>'})
       +'<span class="ar" style="display:block;margin-top:3px">لا يوافقها عبدٌ مسلمٌ يسأل اللهَ شيئاً إلا أعطاه إياه</span></div>';
   }else{
     box.className="jm-saah idle";
-    box.innerHTML='<div class="t">'+t("jm.saahIdleTitle")+'</div><div class="d">'
-      +tf("jm.saahIdleDesc",{time:'<b>'+fmt(start)+'</b>'})+'</div>';
+    box.innerHTML='<div class="t">'+tr("jm.saahIdleTitle")+'</div><div class="d">'
+      +trf("jm.saahIdleDesc",{time:'<b>'+fmt(start)+'</b>'})+'</div>';
   }
 }
 
@@ -1873,21 +1874,21 @@ function currentPrayer(){
   return cur;
 }
 function renderPrayers(){
-  const t=day();const box=document.getElementById("prayerList");box.innerHTML="";
+  const td=day();const box=document.getElementById("prayerList");box.innerHTML="";
   const cur=currentPrayer();
   const en=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
   PRAYERS.forEach((p,i)=>{
     const row=document.createElement("div");
-    row.className="pt-row"+(t.prayers[i]?" done":"")+(i===cur&&!t.prayers[i]?" now":"");
+    row.className="pt-row"+(td.prayers[i]?" done":"")+(i===cur&&!td.prayers[i]?" now":"");
     row.innerHTML='<div class="check">✓</div>'+
       '<div class="nm"><span class="a ar">'+p[0]+'</span> <span class="e">'+p[1]+'</span></div>'+
-      (i===cur&&!t.prayers[i]?'<span class="badge">NOW</span>':'')+
+      (i===cur&&!td.prayers[i]?'<span class="badge">NOW</span>':'')+
       '<div class="tm">'+(TIMES?fmt(TIMES[en[i]]):"—")+'</div>';
-    row.onclick=()=>{t.prayers[i]=t.prayers[i]?0:1;save();renderPrayers();renderStreak();renderWeek();
-      if(t.prayers.every(Boolean))toast("🔥 "+t("today.allDoneToast"))};
+    row.onclick=()=>{td.prayers[i]=td.prayers[i]?0:1;save();renderPrayers();renderStreak();renderWeek();
+      if(td.prayers.every(Boolean))toast("🔥 "+tr("today.allDoneToast"))};
     box.appendChild(row);
   });
-  document.getElementById("prayerCount").textContent=t.prayers.filter(Boolean).length+" / 5";
+  document.getElementById("prayerCount").textContent=td.prayers.filter(Boolean).length+" / 5";
 }
 function renderSwitches(){
   const t=day();
@@ -1940,7 +1941,7 @@ function renderAdhkarList(){
       const arr=t.adhkar[ui.session];
       const ix=arr.indexOf(i);ix>-1?arr.splice(ix,1):arr.push(i);
       const all=arr.length===list.length;
-      if(all&&!t[ui.session]){t[ui.session]=true;toast("✓ "+(ui.session==="morning"?"Morning":"Evening")+" adhkar complete — تقبّل الله")}
+      if(all&&!t[ui.session]){t[ui.session]=true;toast("✓ "+tr(ui.session==="morning"?"adhkar.morning":"adhkar.evening")+" "+tr("adhkar.completeToast")+" — تقبّل الله")}
       if(!all)t[ui.session]=false;
       save();renderAdhkarList();renderSwitches();renderAdhkarChips();
     };
@@ -1948,28 +1949,28 @@ function renderAdhkarList(){
   });
 }
 function renderQuran(){
-  const t=day();
-  document.getElementById("pgVal").textContent=t.pages;
+  const td=day();
+  document.getElementById("pgVal").textContent=td.pages;
   document.getElementById("goalShow").textContent=S.settings.quranGoal;
   document.getElementById("goalVal").textContent=S.settings.quranGoal;
   const pct=Math.min(100,Math.round(S.khatmah/QURAN_PAGES*100));
   document.getElementById("khatmahPct").textContent=pct+"%";
   document.getElementById("khatmahFill").style.width=pct+"%";
-  document.getElementById("khatmahNote").textContent=S.khatmah+" / "+QURAN_PAGES+" "+t("quran.pagesUnit")+(pct>=100?" — "+t("reader.khatmahCompleteInline")+" تقبّل الله 🎉":"");
+  document.getElementById("khatmahNote").textContent=S.khatmah+" / "+QURAN_PAGES+" "+tr("quran.pagesUnit")+(pct>=100?" — "+tr("reader.khatmahCompleteInline")+" تقبّل الله 🎉":"");
   const left=QURAN_PAGES-S.khatmah;
-  document.getElementById("khatmahEta").textContent=(left>0&&S.settings.quranGoal>0)?tf("quran.etaLine",{n:Math.ceil(left/S.settings.quranGoal)}):"";
+  document.getElementById("khatmahEta").textContent=(left>0&&S.settings.quranGoal>0)?trf("quran.etaLine",{n:Math.ceil(left/S.settings.quranGoal)}):"";
 
   const btnReset = document.getElementById("khatmahReset");
   const btnContinue = document.getElementById("khatmahContinue");
 
   if (S.khatmah > 0 || S.reader.currentPage > 1) {
     btnContinue.style.display = "inline-block";
-    btnContinue.textContent = tf("quran.continueReading",{n:S.reader.currentPage});
-    btnReset.textContent = t("quran.newKhatmah");
+    btnContinue.textContent = trf("quran.continueReading",{n:S.reader.currentPage});
+    btnReset.textContent = tr("quran.newKhatmah");
     btnReset.classList.remove("gold");
   } else {
     btnContinue.style.display = "none";
-    btnReset.textContent = t("quran.newKhatmah");
+    btnReset.textContent = tr("quran.newKhatmah");
     btnReset.classList.add("gold");
   }
 }
@@ -2055,7 +2056,7 @@ function renderSettings(){
   document.getElementById("locCoords").textContent=st.lat.toFixed(2)+"°N, "+st.lng.toFixed(2)+"°E · UTC+"+st.tz;
   const ns=document.getElementById("notifStatus");
   if(st.notif && "Notification" in window && Notification.permission === "denied") {
-    ns.textContent = t("set.notifBlocked");
+    ns.textContent = tr("set.notifBlocked");
   } else {
     ns.textContent = "";
   }
@@ -2097,11 +2098,11 @@ function bind(){
   document.getElementById("chip-evening").onclick=()=>{ui.session="evening";renderAdhkarChips()};
   
   document.getElementById("pgPlus").onclick=()=>{
-    const t=day();t.pages++;
+    const td=day();td.pages++;
     S.khatmah=Math.min(QURAN_PAGES,S.khatmah+1);
     S.reader.furthestPageCounted = Math.max(S.reader.furthestPageCounted, S.khatmah);
     save();renderQuran();
-    if(t.pages===S.settings.quranGoal)toast("📖 "+t("quran.goalReachedToast"))
+    if(td.pages===S.settings.quranGoal)toast("📖 "+tr("quran.goalReachedToast"))
   };
   
   document.getElementById("pgMinus").onclick=()=>{
@@ -2116,7 +2117,7 @@ function bind(){
 
   document.getElementById("khatmahReset").onclick=()=>{
     if(S.khatmah > 0 || S.reader.currentPage > 1) {
-      if(!confirm(t("quran.resetConfirm"))) return;
+      if(!confirm(tr("quran.resetConfirm"))) return;
     }
     S.khatmah=0;
     S.reader = {currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: Date.now()};
@@ -2180,7 +2181,7 @@ function bind(){
       const link = PAYMENT_LINKS[amt];
       if (link) {
         window.open(link, '_blank');
-        toast(t("support.thanksToast")+" — جزاك الله خيرًا");
+        toast(tr("support.thanksToast")+" — جزاك الله خيرًا");
       }
     };
   });
@@ -2189,7 +2190,7 @@ function bind(){
     if(v>0){
       if(PAYMENT_LINKS.custom && PAYMENT_LINKS.custom !== "PASTE_CUSTOM_LINK_HERE"){
         window.open(PAYMENT_LINKS.custom, '_blank');
-        toast(t("support.thanksToast")+" — جزاك الله خيرًا");
+        toast(tr("support.thanksToast")+" — جزاك الله خيرًا");
       }
       inp.value="";
     }
@@ -2201,18 +2202,18 @@ function bind(){
       try{await Notification.requestPermission()}catch(e){}
     }
     save();renderSettings();
-    toast(S.settings.notif?t("set.notifOnToast"):t("set.notifOffToast"));
+    toast(S.settings.notif?tr("set.notifOnToast"):tr("set.notifOffToast"));
   };
   document.getElementById("sw-notif-prayer").onclick=()=>{S.settings.notifPrayer=!S.settings.notifPrayer;save();renderSettings()};
   document.getElementById("sw-notif-adhkar").onclick=()=>{S.settings.notifAdhkar=!S.settings.notifAdhkar;save();renderSettings()};
   document.getElementById("useGPS").onclick=()=>{
-    if(!navigator.geolocation){toast(t("set.gpsUnavailable"));return}
+    if(!navigator.geolocation){toast(tr("set.gpsUnavailable"));return}
     navigator.geolocation.getCurrentPosition(pos=>{
       S.settings.lat=pos.coords.latitude;S.settings.lng=pos.coords.longitude;
       S.settings.tz=-new Date().getTimezoneOffset()/60;
       S.settings.locName="My location";
-      save();renderSettings();refreshTimes();toast(t("set.locationUpdated"));
-    },()=>toast(tf("set.locationFailed",{loc:S.settings.locName})));
+      save();renderSettings();refreshTimes();toast(tr("set.locationUpdated"));
+    },()=>toast(trf("set.locationFailed",{loc:S.settings.locName})));
   };
   document.getElementById("goalPlus").onclick=()=>{S.settings.quranGoal++;save();renderQuran()};
   document.getElementById("goalMinus").onclick=()=>{if(S.settings.quranGoal>1){S.settings.quranGoal--;save();renderQuran()}};
@@ -2230,7 +2231,7 @@ function bind(){
 
   btnConfirmReset.onclick = async () => {
     const ogText = btnConfirmReset.textContent;
-    btnConfirmReset.textContent = t("set.resetting");
+    btnConfirmReset.textContent = tr("set.resetting");
     btnConfirmReset.disabled = true;
     try {
       if (currentUser) {
@@ -2252,13 +2253,13 @@ function bind(){
         notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark'
       },reader:{currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: 0}};
       try{localStorage.removeItem("wird-data")}catch(e){}
-      toast(t("set.resetDone"));
+      toast(tr("set.resetDone"));
       setTimeout(() => {
         location.reload();
       }, 1500);
     } catch(e) {
       console.error("Reset failed", e);
-      toast(t("set.resetFailed"));
+      toast(tr("set.resetFailed"));
       btnConfirmReset.textContent = ogText;
       btnConfirmReset.disabled = false;
     }
@@ -2291,12 +2292,12 @@ function setupFirebase() {
     
     if (user) {
       if (user.isAnonymous) {
-        if(accName) accName.textContent = t("account.guest");
-        if(accEmail) accEmail.textContent = t("account.guestSub");
+        if(accName) accName.textContent = tr("account.guest");
+        if(accEmail) accEmail.textContent = tr("account.guestSub");
         if(btnIn) btnIn.style.display = "block";
         if(btnOut) btnOut.style.display = "none";
       } else {
-        if(accName) accName.textContent = user.displayName || t("account.defaultName");
+        if(accName) accName.textContent = user.displayName || tr("account.defaultName");
         if(accEmail) accEmail.textContent = user.email;
         if(btnIn) btnIn.style.display = "none";
         if(btnOut) btnOut.style.display = "block";
@@ -2328,7 +2329,7 @@ function setupFirebase() {
         authReadyResolver();
       }
     } else {
-      if(accName) accName.textContent = t("account.loading");
+      if(accName) accName.textContent = tr("account.loading");
       if(accEmail) accEmail.textContent = "";
       if(btnIn) btnIn.style.display = "none";
       if(btnOut) btnOut.style.display = "none";
@@ -2375,7 +2376,7 @@ function bindAuth() {
         await signInAnonymously(auth);
       } catch(e) {
         console.warn("Anonymous auth disabled or failed.", e.message);
-        toast(t("auth.offline"));
+        toast(tr("auth.offline"));
       }
     };
   }
@@ -2394,13 +2395,13 @@ function bindAuth() {
         await signInAnonymously(auth);
       } catch(e) {
         console.warn("Anonymous auth failed.", e.message);
-        toast(t("auth.offline"));
+        toast(tr("auth.offline"));
       }
     }
   };
   
   btnOut.onclick = async () => {
-    if(confirm(t("auth.signOutConfirm"))) {
+    if(confirm(tr("auth.signOutConfirm"))) {
       await signOut(auth);
       S={days:{},khatmah:0,sadaqah:[],settings:S.settings,reader:{currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: 0}};
       try{localStorage.setItem("wird-data",JSON.stringify(S))}catch(e){}
@@ -2422,10 +2423,10 @@ function bindAuth() {
           await signInWithPopup(auth, provider);
         }
       } else if (action === 'email_in') {
-        if(!emailInp.value || !pwdInp.value) throw new Error(t("auth.needCreds"));
+        if(!emailInp.value || !pwdInp.value) throw new Error(tr("auth.needCreds"));
         await signInWithEmailAndPassword(auth, emailInp.value, pwdInp.value);
       } else if (action === 'email_up') {
-        if(!emailInp.value || !pwdInp.value) throw new Error(t("auth.needCreds"));
+        if(!emailInp.value || !pwdInp.value) throw new Error(tr("auth.needCreds"));
         if (auth.currentUser && auth.currentUser.isAnonymous) {
            const cred = EmailAuthProvider.credential(emailInp.value, pwdInp.value);
            await linkWithCredential(auth.currentUser, cred);
@@ -2433,22 +2434,22 @@ function bindAuth() {
            await createUserWithEmailAndPassword(auth, emailInp.value, pwdInp.value);
         }
       } else if (action === 'reset') {
-        if(!emailInp.value) throw new Error(t("auth.needEmail"));
+        if(!emailInp.value) throw new Error(tr("auth.needEmail"));
         await sendPasswordResetEmail(auth, emailInp.value);
-        errDiv.textContent = t("auth.resetSent");
+        errDiv.textContent = tr("auth.resetSent");
         errDiv.style.color = "var(--ok)";
         return;
       }
       overlay.style.display = 'none';
-      toast(t("auth.signedIn"));
+      toast(tr("auth.signedIn"));
     } catch(e) {
       errDiv.style.color = "#ff6b6b";
       let msg = e.message;
-      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) msg = t("auth.errBadCreds");
-      else if (msg.includes('auth/email-already-in-use')) msg = t("auth.errInUse");
-      else if (msg.includes('auth/weak-password')) msg = t("auth.errWeak");
-      else if (msg.includes('auth/invalid-email')) msg = t("auth.errInvalidEmail");
-      else if (msg.includes('auth/network-request-failed')) msg = t("auth.errNetwork");
+      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) msg = tr("auth.errBadCreds");
+      else if (msg.includes('auth/email-already-in-use')) msg = tr("auth.errInUse");
+      else if (msg.includes('auth/weak-password')) msg = tr("auth.errWeak");
+      else if (msg.includes('auth/invalid-email')) msg = tr("auth.errInvalidEmail");
+      else if (msg.includes('auth/network-request-failed')) msg = tr("auth.errNetwork");
       else msg = msg.replace(/Firebase:\s*/, '').replace(/\(auth\/.*\)\.?/, '');
       errDiv.textContent = msg;
     }
@@ -2577,10 +2578,10 @@ window.showListenReciters = async () => {
   
   const listDiv = document.getElementById('ql-reciter-list');
   if(!qlReciters) {
-     listDiv.innerHTML = '<div class="loading">'+t("quran.loadingReciters")+'</div>';
+     listDiv.innerHTML = '<div class="loading">'+tr("quran.loadingReciters")+'</div>';
      const r = await fetchReciters();
      if(!r) {
-       listDiv.innerHTML = '<div class="loading">'+t("quran.failedReciters")+'<br><br><button class="btn" onclick="showListenReciters()">'+t("common.retry")+'</button></div>';
+       listDiv.innerHTML = '<div class="loading">'+tr("quran.failedReciters")+'<br><br><button class="btn" onclick="showListenReciters()">'+tr("common.retry")+'</button></div>';
        return;
      }
   }
@@ -2785,7 +2786,7 @@ if ('mediaSession' in navigator) {
       return; // STOP execution
     } else {
       console.warn("Falling back to local data");
-      toast(t("auth.offline"));
+      toast(tr("auth.offline"));
     }
   }
 
