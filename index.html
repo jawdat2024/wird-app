@@ -1292,6 +1292,23 @@ function toast(msg){
   toastTimer = setTimeout(()=>t.classList.remove("show"),3200);
 }
 
+/* Browsers block audio.play() unless it follows a real user gesture. Prayer
+   time fires from a timer with no gesture attached, so we "unlock" playback
+   on the very first tap/click/key anywhere in the app — after that, the
+   browser treats this origin as allowed to play audio programmatically. */
+let audioUnlocked = false;
+function unlockAudioOnce(){
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  try{
+    const a = new Audio(ATHAN_VOICES[ATHAN_VOICES.length-1].file);
+    a.volume = 0;
+    a.play().then(()=>{a.pause();a.currentTime=0}).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener("pointerdown", unlockAudioOnce, {once:true});
+document.addEventListener("keydown", unlockAudioOnce, {once:true});
+
 let currentAthanAudio = null;
 window.stopAthan = () => {
   if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
@@ -1302,13 +1319,14 @@ function playPrayerAthan(msg) {
   if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
   const v = S.settings.athanVoice || "makkah";
   let voice = ATHAN_VOICES.find(x => x.id === v);
-  if (!voice) voice = ATHAN_VOICES[7];
+  if (!voice) voice = ATHAN_VOICES[ATHAN_VOICES.length-1];
   
   currentAthanAudio = new Audio(voice.file);
   currentAthanAudio.play().catch(e => {
+    console.warn("Athan playback failed for "+v+":", e.name, e.message);
     if(v !== 'tone') {
-       currentAthanAudio = new Audio(ATHAN_VOICES[7].file);
-       currentAthanAudio.play().catch(err=>console.log(err));
+       currentAthanAudio = new Audio(ATHAN_VOICES[ATHAN_VOICES.length-1].file);
+       currentAthanAudio.play().catch(err=>console.warn("Fallback tone also failed:", err.name, err.message));
     }
   });
   
@@ -1532,6 +1550,7 @@ const I18N={
   "set.atEach":     ["At each prayer time","عند كل وقت صلاة","ہر نماز کے وقت","Sa bawat oras ng dasal","En cada oración"],
   "set.adhkarRem":  ["Adhkar reminders","تذكير الأذكار","اذکار کی یاد دہانی","Paalala ng adhkar","Recordatorios de adhkar"],
   "set.athanVoice": ["Athan voice","صوت الأذان","اذان کی آواز","Boses ng athan","Voz del adhan"],
+  "set.athanPreviewFailed":["Couldn't play this voice — check your device volume and try again","تعذّر تشغيل هذا الصوت — تحقق من مستوى الصوت وحاول مجدداً","یہ آواز چلائی نہیں جا سکی — والیوم چیک کریں اور دوبارہ کوشش کریں","Hindi na-play ang tinig na ito — suriin ang volume at subukan muli","No se pudo reproducir esta voz — revisa el volumen e inténtalo de nuevo"],
   "set.location":   ["Location & prayer times","الموقع وأوقات الصلاة","مقام اور نماز کے اوقات","Lokasyon at oras ng dasal","Ubicación y horarios"],
   "set.useGps":     ["Use my GPS","استخدام GPS","میرا GPS استعمال کریں","Gamitin ang GPS ko","Usar mi GPS"],
   "set.quranGoal":  ["Quran goal","هدف القرآن","قرآن کا ہدف","Layunin sa Quran","Meta del Corán"],
@@ -1994,14 +2013,14 @@ function renderSadaqah(){
   }
 }
 const ATHAN_VOICES = [
-  {id:"makkah",     name:"Makkah Haram",        ar:"أذان الحرم المكي",   file:"assets/athan/makkah.mp3"},
-  {id:"madinah",    name:"Madinah Haram",       ar:"أذان الحرم المدني",  file:"assets/athan/madinah.mp3"},
-  {id:"abdulbasit", name:"Abdul Basit",         ar:"عبد الباسط عبد الصمد", file:"assets/athan/abdulbasit.mp3"},
-  {id:"minshawi",   name:"Al-Minshawi",         ar:"محمد صديق المنشاوي",  file:"assets/athan/minshawi.mp3"},
-  {id:"afasy",      name:"Mishary Al-Afasy",    ar:"مشاري راشد العفاسي",  file:"assets/athan/afasy.mp3"},
-  {id:"aqsa",       name:"Al-Aqsa Mosque",      ar:"المسجد الأقصى",      file:"assets/athan/aqsa.mp3"},
-  {id:"dubai",      name:"Dubai, UAE",          ar:"أذان دبي",           file:"assets/athan/dubai.mp3"},
-  {id:"tone",       name:"Simple tone",         ar:"تنبيه بسيط",         file:"assets/athan/tone.mp3"},
+  {id:"makkah",     name:"Makkah Haram",        ar:"أذان الحرم المكي",   file:"/assets/athan/makkah.mp3"},
+  {id:"madinah",    name:"Madinah Haram",       ar:"أذان الحرم المدني",  file:"/assets/athan/madinah.mp3"},
+  {id:"abdulbasit", name:"Abdul Basit",         ar:"عبد الباسط عبد الصمد", file:"/assets/athan/abdulbasit.mp3"},
+  {id:"minshawi",   name:"Al-Minshawi",         ar:"محمد صديق المنشاوي",  file:"/assets/athan/minshawi.mp3"},
+  {id:"afasy",      name:"Mishary Al-Afasy",    ar:"مشاري راشد العفاسي",  file:"/assets/athan/afasy.mp3"},
+  {id:"aqsa",       name:"Al-Aqsa Mosque",      ar:"المسجد الأقصى",      file:"/assets/athan/aqsa.mp3"},
+  {id:"dubai",      name:"Dubai, UAE",          ar:"أذان دبي",           file:"/assets/athan/dubai.mp3"},
+  {id:"tone",       name:"Simple tone",         ar:"تنبيه بسيط",         file:"/assets/athan/tone.mp3"},
 ];
 let currentAthanPreview = null;
 
@@ -2038,11 +2057,8 @@ window.previewAthanVoice = (id) => {
   if(!voice) return;
   currentAthanPreview = new Audio(voice.file);
   currentAthanPreview.play().catch(e => {
-    if(id !== 'tone') {
-       S.settings.athanVoice = 'tone'; save(); renderAthanVoices();
-       currentAthanPreview = new Audio(ATHAN_VOICES[7].file);
-       currentAthanPreview.play().catch(e=>console.log(e));
-    }
+    console.warn("Preview failed for "+id+":", e.name, e.message);
+    toast(tr("set.athanPreviewFailed"));
   });
   setTimeout(() => { if(currentAthanPreview) { currentAthanPreview.pause(); currentAthanPreview=null; } }, 10000);
 };
