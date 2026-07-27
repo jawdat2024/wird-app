@@ -78,7 +78,7 @@ body{
 header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 14px}
 .logo{font-family:'Amiri',serif;font-size:30px;color:var(--brass-soft);line-height:1}
 .logo small{font-size:10px;font-family:'Manrope',sans-serif;letter-spacing:.32em;color:var(--mist);display:block;margin-top:3px}
-.dateline{text-align:right;font-size:12px;color:var(--mist);line-height:1.5}
+.dateline{text-align:right;font-size:12px;color:var(--mist);line-height:1.5;cursor:pointer}
 .dateline b{color:var(--ivory);font-weight:600;display:block;font-size:13px}
 
 /* Next prayer hero */
@@ -274,6 +274,223 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 #ql-seek { -webkit-appearance: none; height: 6px; border-radius: 3px; background: rgba(198,161,91,0.2); outline: none; }
 #ql-seek::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--brass); cursor: pointer; }
 
+/* Hijri Calendar Overlay */
+.hc-body { flex: 1; overflow-y: auto; padding: 16px; }
+.hc-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+.hc-nav-btn {
+  background: var(--card); border: 1px solid var(--edge); color: var(--brass-soft);
+  width: 40px; height: 40px; border-radius: 20px; cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .2s, border-color .2s;
+}
+.hc-nav-btn:hover { background: var(--edge); }
+.hc-month { text-align: center; flex: 1; }
+.hc-month-ar { font-family: 'Amiri', serif; font-size: 24px; color: var(--ivory); line-height: 1.2; }
+.hc-month-en { font-size: 11px; letter-spacing: .18em; color: var(--mist); text-transform: uppercase; margin-top: 3px; }
+.hc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.hc-dow {
+  text-align: center; font-size: 10px; letter-spacing: .08em; color: var(--mist);
+  text-transform: uppercase; padding-bottom: 6px;
+}
+.hc-cell {
+  aspect-ratio: 1; border-radius: 10px; border: 1px solid transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--ivory); position: relative; background: var(--card);
+}
+.hc-cell.empty { background: transparent; }
+.hc-cell.today { border-color: var(--brass); background: rgba(198,161,91,.14); font-weight: 700; color: var(--brass-soft); }
+.hc-cell .hc-greg { font-size: 9px; color: var(--mist); margin-top: 1px; }
+.hc-dot { width: 4px; height: 4px; border-radius: 2px; background: var(--brass); margin-top: 3px; }
+.hc-events { margin-top: 18px; }
+.hc-events h3 {
+  font-size: 11px; letter-spacing: .18em; color: var(--mist);
+  text-transform: uppercase; margin-bottom: 10px; font-weight: 600;
+}
+.hc-event {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--card); border: 1px solid var(--edge);
+  border-radius: 12px; padding: 11px 13px; margin-bottom: 8px;
+}
+.hc-event-day {
+  font-family: 'Amiri', serif; font-size: 20px; color: var(--brass-soft);
+  line-height: 1; min-width: 26px; text-align: center; flex-shrink: 0;
+}
+.hc-event-ar { font-family: 'Amiri', serif; font-size: 17px; color: var(--ivory); line-height: 1.4; }
+.hc-event-en { font-size: 12px; color: var(--mist); margin-top: 2px; }
+.hc-event.is-today { border-color: var(--brass); background: rgba(198,161,91,.10); }
+.hc-empty-note { font-size: 13px; color: var(--mist); text-align: center; padding: 14px 0; }
+.hc-disclaimer {
+  margin-top: 16px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(198,161,91,.07); border: 1px solid var(--edge);
+  font-size: 12px; color: var(--mist); line-height: 1.6;
+}
+.hc-disclaimer .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); display: block; margin-top: 5px; }
+
+/* Jumu'ah (Friday) card */
+.jm-card { border-color: rgba(198,161,91,.42); background: linear-gradient(180deg, rgba(198,161,91,.09), transparent 60%), var(--card); }
+.jm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.jm-title-ar { font-family: 'Amiri', serif; font-size: 26px; color: var(--brass-soft); line-height: 1.1; }
+.jm-badge { font-size: 10px; letter-spacing: .16em; color: var(--brass); text-transform: uppercase; white-space: nowrap; }
+.jm-hadith { font-size: 12px; color: var(--mist); line-height: 1.6; margin-bottom: 12px; }
+.jm-hadith .ar { font-family: 'Amiri', serif; font-size: 15px; color: var(--ivory); display: block; margin-bottom: 3px; }
+.jm-hadith .src { color: var(--brass); font-size: 11px; }
+.jm-sunan { display: flex; flex-direction: column; gap: 2px; }
+.jm-row { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--edge); cursor: pointer; }
+.jm-row:first-child { border-top: none; }
+.jm-check {
+  width: 22px; height: 22px; border-radius: 7px; border: 1px solid var(--edge);
+  background: var(--deep); flex-shrink: 0; position: relative; transition: background .2s, border-color .2s;
+}
+.jm-check::after {
+  content: ''; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+  border: solid transparent; border-width: 0 2px 2px 0; transform: rotate(45deg); transition: border-color .2s;
+}
+.jm-row.done .jm-check { background: var(--ok); border-color: var(--ok); }
+.jm-row.done .jm-check::after { border-color: #fff; }
+.jm-txt { flex: 1; min-width: 0; }
+.jm-txt .t { font-size: 14px; color: var(--ivory); }
+.jm-txt .d { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); margin-top: 1px; }
+.jm-row.done .jm-txt .t { color: var(--mist); }
+.jm-go {
+  background: none; border: 1px solid var(--edge); color: var(--brass-soft);
+  border-radius: 9px; padding: 5px 11px; font-size: 11px; cursor: pointer;
+  font-family: 'Manrope', sans-serif; white-space: nowrap; flex-shrink: 0;
+}
+.jm-go:hover { background: var(--edge); }
+.jm-saah {
+  margin-top: 12px; padding: 11px 13px; border-radius: 12px;
+  background: rgba(111,191,155,.10); border: 1px solid rgba(111,191,155,.42);
+}
+.jm-saah.idle { background: rgba(198,161,91,.06); border-color: var(--edge); }
+.jm-saah .t { font-size: 13px; color: var(--ok); font-weight: 600; }
+.jm-saah.idle .t { color: var(--brass-soft); }
+.jm-saah .d { font-size: 12px; color: var(--mist); line-height: 1.6; margin-top: 3px; }
+.jm-saah .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--ivory); }
+
+/* Wird Plus */
+.wp-body { flex: 1; overflow-y: auto; padding: 20px 16px 28px; }
+.wp-hero { text-align: center; padding: 8px 0 22px; }
+.wp-mark { font-family: 'Amiri', serif; font-size: 40px; color: var(--brass-soft); line-height: 1.1; }
+.wp-mark small { display: block; font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: .34em; color: var(--mist); margin-top: 5px; }
+.wp-tag { font-size: 13px; color: var(--mist); line-height: 1.6; margin-top: 12px; }
+.wp-free {
+  display: flex; gap: 11px; align-items: flex-start;
+  background: rgba(111,191,155,.09); border: 1px solid rgba(111,191,155,.38);
+  border-radius: 14px; padding: 13px 14px; margin-bottom: 18px;
+}
+.wp-free .ic { color: var(--ok); font-size: 15px; line-height: 1.3; flex-shrink: 0; }
+.wp-free .t { font-size: 13px; color: var(--ok); font-weight: 600; }
+.wp-free .d { font-size: 12px; color: var(--mist); line-height: 1.6; margin-top: 3px; }
+.wp-free .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); display: block; margin-top: 3px; }
+.wp-sec { font-size: 11px; letter-spacing: .18em; color: var(--mist); text-transform: uppercase; margin-bottom: 11px; font-weight: 600; }
+.wp-feat { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-top: 1px solid var(--edge); }
+.wp-feat:first-of-type { border-top: none; }
+.wp-feat .ic { color: var(--brass); flex-shrink: 0; font-size: 13px; line-height: 1.5; }
+.wp-feat .t { font-size: 14px; color: var(--ivory); }
+.wp-feat .d { font-size: 12px; color: var(--mist); line-height: 1.55; margin-top: 2px; }
+.wp-feat .ar { font-family: 'Amiri', serif; font-size: 13px; color: var(--mist); }
+.wp-price { text-align: center; margin: 22px 0 14px; }
+.wp-price .amt { font-size: 30px; color: var(--brass-soft); font-weight: 700; line-height: 1.1; }
+.wp-price .per { font-size: 12px; color: var(--mist); margin-top: 4px; }
+.wp-cta { width: 100%; padding: 14px; font-size: 15px; }
+.wp-soon {
+  text-align: center; padding: 13px; border-radius: 12px;
+  background: rgba(198,161,91,.07); border: 1px dashed var(--edge);
+  font-size: 13px; color: var(--mist); line-height: 1.6;
+}
+.wp-note { font-size: 11px; color: var(--mist); text-align: center; line-height: 1.7; margin-top: 14px; }
+.wp-entry { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.wp-entry .wp-entry-mark { font-family: 'Amiri', serif; font-size: 26px; color: var(--brass-soft); line-height: 1; flex-shrink: 0; }
+.wp-entry .t { font-size: 14px; color: var(--ivory); }
+.wp-entry .d { font-size: 12px; color: var(--mist); margin-top: 2px; }
+.wp-entry .arrow { color: var(--brass); font-size: 18px; flex-shrink: 0; }
+
+/* Reader test mode (hifz) — visual masking only, text is never altered */
+.qr-test-hint { display: none; }
+#quran-reader.qr-testing .qr-test-hint {
+  display: block; text-align: center; font-size: 11px; letter-spacing: .1em;
+  color: var(--brass); padding: 7px 12px; background: rgba(198,161,91,.09);
+  border-bottom: 1px solid var(--edge);
+}
+#quran-reader.qr-testing .qr-text { filter: blur(9px); cursor: pointer; transition: filter .25s ease; }
+#quran-reader.qr-testing .qr-text.revealed { filter: none; }
+@media (prefers-reduced-motion: reduce) { #quran-reader.qr-testing .qr-text { transition: none; } }
+
+/* Hifz plans */
+.hz-empty { text-align: center; padding: 8px 0 4px; }
+.hz-empty .ar { font-family: 'Amiri', serif; font-size: 22px; color: var(--brass-soft); display: block; margin-bottom: 6px; }
+.hz-empty .d { font-size: 13px; color: var(--mist); line-height: 1.7; }
+.hz-field { margin-bottom: 12px; }
+.hz-label { font-size: 11px; letter-spacing: .14em; color: var(--mist); text-transform: uppercase; margin-bottom: 7px; }
+.hz-juz-wrap { display: flex; flex-wrap: wrap; gap: 6px; max-height: 132px; overflow-y: auto; padding: 2px; }
+.hz-juz {
+  min-width: 38px; padding: 7px 9px; border-radius: 9px; cursor: pointer;
+  background: var(--deep); border: 1px solid var(--edge); color: var(--ivory);
+  font-size: 13px; text-align: center; transition: background .2s, border-color .2s;
+}
+.hz-juz.sel { background: rgba(198,161,91,.18); border-color: var(--brass); color: var(--brass-soft); font-weight: 700; }
+.hz-range { display: flex; align-items: center; gap: 8px; }
+.hz-range .s-input {
+  flex: 1; min-width: 0; background: var(--deep); border: 1px solid var(--edge);
+  color: var(--ivory); border-radius: 10px; padding: 10px 12px; font-size: 15px;
+  font-family: 'Manrope', sans-serif; outline: none; -moz-appearance: textfield;
+}
+.hz-range .s-input::placeholder { color: var(--mist); }
+.hz-range .s-input:focus { border-color: var(--brass); }
+.hz-range .s-input::-webkit-outer-spin-button,
+.hz-range .s-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.hz-range span { font-size: 12px; color: var(--mist); flex-shrink: 0; }
+.hz-plan-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.hz-plan-name { font-size: 16px; color: var(--ivory); font-weight: 600; }
+.hz-plan-sub { font-size: 12px; color: var(--mist); margin-top: 2px; }
+.hz-bar { height: 7px; border-radius: 4px; background: var(--deep); overflow: hidden; border: 1px solid var(--edge); }
+.hz-fill { height: 100%; background: linear-gradient(90deg, var(--brass), var(--brass-soft)); transition: width .3s ease; }
+.hz-stats { display: flex; justify-content: space-between; font-size: 12px; color: var(--mist); margin-top: 7px; }
+.hz-portion { margin-top: 15px; }
+.hz-page-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-top: 1px solid var(--edge);
+}
+.hz-page-row:first-of-type { border-top: none; }
+.hz-page-num { font-family: 'Amiri', serif; font-size: 19px; color: var(--brass-soft); min-width: 42px; }
+.hz-page-row.done .hz-page-num { color: var(--ok); }
+.hz-page-lbl { flex: 1; font-size: 12px; color: var(--mist); min-width: 0; }
+.hz-act {
+  background: none; border: 1px solid var(--edge); color: var(--brass-soft);
+  border-radius: 9px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+  font-family: 'Manrope', sans-serif; flex-shrink: 0;
+}
+.hz-act:hover { background: var(--edge); }
+.hz-act.on { background: rgba(111,191,155,.16); border-color: var(--ok); color: var(--ok); }
+.hz-done-note { font-size: 13px; color: var(--ok); text-align: center; padding: 12px 0 2px; }
+.hz-done-note .ar { font-family: 'Amiri', serif; font-size: 15px; display: block; margin-top: 3px; }
+.hz-switcher { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.hz-chip {
+  padding: 6px 11px; border-radius: 9px; cursor: pointer; font-size: 12px;
+  background: var(--deep); border: 1px solid var(--edge); color: var(--mist);
+}
+.hz-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); color: var(--brass-soft); }
+
+/* Language picker */
+.lang-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.lang-chip {
+  padding: 9px 13px; border-radius: 11px; cursor: pointer; text-align: center;
+  background: var(--deep); border: 1px solid var(--edge); min-width: 84px;
+  transition: background .2s, border-color .2s;
+}
+.lang-chip .nat { display: block; font-size: 15px; color: var(--ivory); font-family: 'Amiri', serif; }
+.lang-chip .lbl { display: block; font-size: 10px; letter-spacing: .1em; color: var(--mist); text-transform: uppercase; margin-top: 2px; }
+.lang-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); }
+.lang-chip.sel .nat { color: var(--brass-soft); }
+
+/* RTL adjustments — only what direction alone doesn't solve */
+html[dir="rtl"] .dateline { text-align: left; }
+html[dir="rtl"] .hz-page-num,
+html[dir="rtl"] .hc-event-day { text-align: center; }
+html[dir="rtl"] .jm-check::after { transform: rotate(45deg); }
+html[dir="rtl"] .wp-entry .arrow { transform: scaleX(-1); }
+html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
+
 </style>
 </head>
 <body>
@@ -287,7 +504,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
     <div class="fade-in-up" style="margin-bottom: 40px; color: var(--mist); font-size: 15px; animation-delay: 0.2s;">Start your journey — your daily worship companion<br><span style="font-family: 'Amiri', serif; font-size: 18px; display:block; margin-top:8px;">ابدأ رحلتك — رفيقك اليومي للعبادة</span></div>
     
     <div class="fade-in-up" style="display: flex; flex-direction: column; gap: 12px; animation-delay: 0.3s;">
-      <button class="btn gold" id="btnWelcomeSignIn" style="width: 100%; justify-content: center; font-size: 16px; padding: 14px;">Sign in</button>
+      <button class="btn gold" id="btnWelcomeSignIn" style="width: 100%; justify-content: center; font-size: 16px; padding: 14px;" data-i18n="set.signIn">Sign in</button>
       <button class="btn" id="btnWelcomeSignUp" style="width: 100%; justify-content: center; background: transparent; border: 1px solid var(--brass); color: var(--brass); font-size: 16px; padding: 14px;">Create account</button>
       <button class="btn" id="btnWelcomeGuest" style="width: 100%; justify-content: center; background: transparent; border: none; color: var(--mist); font-size: 14px; padding: 14px;">Continue as guest</button>
     </div>
@@ -325,7 +542,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
     <div class="d" style="margin-bottom: 24px; color: var(--mist);">Reset ALL your data? Prayers, streaks, khatmah progress and settings will be permanently deleted. This cannot be undone.</div>
     <div style="display: flex; gap: 12px; justify-content: center;">
       <button class="btn" id="btnCancelReset">Cancel</button>
-      <button class="btn danger" id="btnConfirmReset">Reset</button>
+      <button class="btn danger" id="btnConfirmReset" data-i18n="common.reset">Reset</button>
     </div>
   </div>
 </div>
@@ -343,6 +560,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       <button class="qr-aa" id="qrAa">Aa</button>
     </div>
   </div>
+  <div class="qr-test-hint" id="qrTestHint">Testing — tap the text to reveal · اضغط على النص للكشف</div>
   <div class="qr-body-wrap" id="qrBodyWrap">
     <div class="qr-page-frame">
       <div class="qr-page-inner">
@@ -360,18 +578,78 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   </div>
 </div>
 
+<div id="hijri-cal" class="qr-overlay" style="display:none">
+  <div class="qr-top">
+    <button class="qr-close" id="hcClose">✕</button>
+    <div class="qr-meta">
+      <div class="qr-title">التقويم الهجري</div>
+      <div class="qr-sub">UMM AL-QURA</div>
+    </div>
+    <button class="qr-aa" id="hcToday" style="font-size:12px;letter-spacing:.1em;">TODAY</button>
+  </div>
+  <div class="hc-body">
+    <div class="hc-nav">
+      <button class="hc-nav-btn" id="hcPrev">‹</button>
+      <div class="hc-month">
+        <div class="hc-month-ar" id="hcMonthAr">—</div>
+        <div class="hc-month-en" id="hcMonthEn">—</div>
+      </div>
+      <button class="hc-nav-btn" id="hcNext">›</button>
+    </div>
+    <div class="hc-grid" id="hcGrid"></div>
+    <div class="hc-events">
+      <h3>Events this month</h3>
+      <div id="hcEvents"></div>
+    </div>
+    <div class="hc-disclaimer">
+      Hijri dates follow the Umm al-Qura calendar and may differ by a day depending on local moon sighting.
+      <span class="ar">التواريخ الهجرية بحسب تقويم أم القرى، وقد تختلف يوماً حسب رؤية الهلال محلياً.</span>
+    </div>
+  </div>
+</div>
+
+<div id="wird-plus" class="qr-overlay" style="display:none">
+  <div class="qr-top">
+    <button class="qr-close" id="wpClose">✕</button>
+    <div class="qr-meta">
+      <div class="qr-title">وِرد بلس</div>
+      <div class="qr-sub">WIRD PLUS</div>
+    </div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="wp-body">
+    <div class="wp-hero">
+      <div class="wp-mark">وِرد<small>PLUS</small></div>
+      <div class="wp-tag">Extras that help you keep your wird — while every act of worship in Wird stays free.</div>
+    </div>
+    <div class="wp-free">
+      <div class="ic">✓</div>
+      <div>
+        <div class="t">Worship is always free</div>
+        <div class="d">Prayers, adhkar, tasbih, the Quran reader, khatmah and athan will never sit behind a paywall.
+          <span class="ar">العبادات في وِرد مجانية دائماً.</span>
+        </div>
+      </div>
+    </div>
+    <div class="wp-sec">What Plus adds</div>
+    <div id="wpFeatures"></div>
+    <div id="wpCta"></div>
+    <div class="wp-note">Wird Plus supports the development of the app.<br>Cancel any time — your data stays yours either way.</div>
+  </div>
+</div>
+
 <div class="app">
   <header>
     <div class="logo">وِرد<small>WIRD</small></div>
     <div class="dateline" id="dateline"></div>
   </header>
 
-  <div id="loading" class="loading">Loading your wird…</div>
+  <div id="loading" class="loading" data-i18n="app.loading">Loading your wird…</div>
 
   <div id="main" style="display:none">
 
   <div class="hero">
-    <div class="eyebrow">Next prayer</div>
+    <div class="eyebrow" data-i18n="today.next">Next prayer</div>
     <div class="np"><span class="name ar" id="npName">—</span><span class="time" id="npTime">—</span></div>
     <div class="countdown" id="npCountdown"></div>
     <div class="greet" id="greet"></div>
@@ -380,29 +658,42 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <div class="statsband">
     <div class="streak">
       <div class="num" id="streakNum">0</div>
-      <div class="lbl">day streak<br>all 5 prayers 🔥</div>
+      <div class="lbl"><span data-i18n="today.streak">day streak</span><br><span data-i18n="today.all5">all 5 prayers</span> 🔥</div>
     </div>
     <div class="week" id="weekStrip" title="Last 7 days"></div>
   </div>
 
   <!-- TODAY -->
   <section class="page active" id="page-today">
+    <div class="card jm-card" id="jumuahCard" style="display:none">
+      <div class="jm-head">
+        <div class="jm-title-ar">يوم الجمعة</div>
+        <div class="jm-badge">Jumu'ah</div>
+      </div>
+      <div class="jm-hadith">
+        <span class="ar">خَيْرُ يَوْمٍ طَلَعَتْ عَلَيْهِ الشَّمْسُ يَوْمُ الْجُمُعَةِ</span>
+        The best day on which the sun has risen is Friday.
+        <span class="src">— صحيح مسلم</span>
+      </div>
+      <div class="jm-sunan" id="jumuahSunan"></div>
+      <div class="jm-saah" id="jumuahSaah"></div>
+    </div>
     <div class="card">
-      <h2>Prayers <span class="sub" id="prayerCount">0 / 5</span></h2>
+      <h2><span data-i18n="today.prayers">Prayers</span> <span class="sub" id="prayerCount">0 / 5</span></h2>
       <div id="prayerList"></div>
     </div>
     <div class="card">
-      <h2>Today's habits</h2>
+      <h2 data-i18n="today.habits">Today's habits</h2>
       <div class="row">
-        <div><div class="t">Morning adhkar</div><div class="d">أذكار الصباح</div></div>
+        <div><div class="t" data-i18n="today.morning">Morning adhkar</div><div class="d">أذكار الصباح</div></div>
         <div class="switch" id="sw-morning"></div>
       </div>
       <div class="row">
-        <div><div class="t">Evening adhkar</div><div class="d">أذكار المساء</div></div>
+        <div><div class="t" data-i18n="today.evening">Evening adhkar</div><div class="d">أذكار المساء</div></div>
         <div class="switch" id="sw-evening"></div>
       </div>
       <div class="row">
-        <div><div class="t">Fasting today</div><div class="d" id="fastHint">صيام</div></div>
+        <div><div class="t" data-i18n="today.fasting">Fasting today</div><div class="d" id="fastHint">صيام</div></div>
         <div class="switch" id="sw-fasting"></div>
       </div>
     </div>
@@ -411,7 +702,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <!-- ADHKAR -->
   <section class="page" id="page-adhkar">
     <div class="card">
-      <h2>Tasbih <span class="sub">after-prayer dhikr</span></h2>
+      <h2><span data-i18n="today.tasbih">Tasbih</span> <span class="sub" data-i18n="today.afterPrayer">after-prayer dhikr</span></h2>
       <div class="tasbih-wrap">
         <div class="dhikr-ar" id="dhikrAr">سُبْحَانَ الله</div>
         <div class="dhikr-en" id="dhikrEn">SubhanAllah — Glory be to Allah</div>
@@ -426,16 +717,16 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
         </div>
         <div class="seq-done" id="seqDone" style="display:none">✓ Tasbih complete — تقبّل الله</div>
         <div class="tasbih-controls">
-          <button class="btn" id="tReset">Reset</button>
-          <button class="btn gold" id="tSkip">Next dhikr →</button>
+          <button class="btn" id="tReset" data-i18n="common.reset">Reset</button>
+          <button class="btn gold" id="tSkip" data-i18n="today.nextDhikr">Next dhikr →</button>
         </div>
       </div>
     </div>
     <div class="card">
-      <h2>Adhkar checklist <span class="sub" id="adhkarSessionLbl"></span></h2>
+      <h2><span data-i18n="adhkar.list">Adhkar checklist</span> <span class="sub" id="adhkarSessionLbl"></span></h2>
       <div class="chips">
-        <div class="chip active" data-s="morning" id="chip-morning">Morning<span class="done-dot" id="dot-morning"></span></div>
-        <div class="chip" data-s="evening" id="chip-evening">Evening<span class="done-dot" id="dot-evening"></span></div>
+        <div class="chip active" data-s="morning" id="chip-morning"><span data-i18n="adhkar.morning">Morning</span><span class="done-dot" id="dot-morning"></span></div>
+        <div class="chip" data-s="evening" id="chip-evening"><span data-i18n="adhkar.evening">Evening</span><span class="done-dot" id="dot-evening"></span></div>
       </div>
       <div id="adhkarList"></div>
       <div class="small-note">Source: Hisnul Muslim (حصن المسلم)</div>
@@ -445,13 +736,64 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <!-- QURAN -->
   <section class="page" id="page-quran">
   <div class="quran-tabs">
-    <button class="qtab active" id="qtab-read" onclick="setQuranTab('read')">Read / قراءة</button>
-    <button class="qtab" id="qtab-listen" onclick="setQuranTab('listen')">Listen / استماع</button>
+    <button class="qtab active" id="qtab-read" onclick="setQuranTab('read')" data-i18n="quran.read">Read</button>
+    <button class="qtab" id="qtab-listen" onclick="setQuranTab('listen')" data-i18n="quran.listen">Listen</button>
+    <button class="qtab" id="qtab-hifz" onclick="setQuranTab('hifz')" data-i18n="quran.hifz">Hifz</button>
+  </div>
+
+  <div id="quran-hifz-view" style="display:none">
+    <div class="card" id="hifzActiveCard" style="display:none">
+      <div class="hz-plan-head">
+        <div style="min-width:0">
+          <div class="hz-plan-name" id="hzName">—</div>
+          <div class="hz-plan-sub" id="hzRange">—</div>
+        </div>
+        <button class="hz-act" id="hzDelete" data-i18n="common.delete">Delete</button>
+      </div>
+      <div class="hz-bar"><div class="hz-fill" id="hzFill" style="width:0%"></div></div>
+      <div class="hz-stats"><span id="hzCount">0 / 0 pages</span><span id="hzPct">0%</span></div>
+      <div class="hz-portion">
+        <div class="hz-label" data-i18n="hifz.portion">Today's portion</div>
+        <div id="hzPortion"></div>
+      </div>
+    </div>
+    <div class="card" id="hifzSwitchCard" style="display:none">
+      <div class="hz-label" data-i18n="hifz.yourPlans">Your plans</div>
+      <div class="hz-switcher" id="hzSwitcher"></div>
+    </div>
+    <div class="card">
+      <h2 id="hifzFormTitle" data-i18n="hifz.newPlan">New hifz plan</h2>
+      <div class="hz-empty" id="hifzEmptyNote">
+        <span class="ar">﴿ وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ ﴾</span>
+        <div class="d" data-i18n="hifz.hint">Pick a juz, or set your own page range, and Wird will pace it for you.</div>
+      </div>
+      <div class="hz-field">
+        <div class="hz-label" data-i18n="hifz.chooseJuz">Choose a juz</div>
+        <div class="hz-juz-wrap" id="hzJuzWrap"></div>
+      </div>
+      <div class="hz-field">
+        <div class="hz-label" data-i18n="hifz.orRange">Or a page range</div>
+        <div class="hz-range">
+          <input type="number" class="s-input" id="hzFrom" min="1" max="604" placeholder="From" data-i18n-ph="hz.from">
+          <span>→</span>
+          <input type="number" class="s-input" id="hzTo" min="1" max="604" placeholder="To" data-i18n-ph="hz.to">
+        </div>
+      </div>
+      <div class="hz-field">
+        <div class="hz-label" data-i18n="hifz.perDay">Pages per day</div>
+        <div class="pages-ctl">
+          <button class="btn round" id="hzPerMinus">−</button>
+          <div class="pv" id="hzPerVal">1</div>
+          <button class="btn round" id="hzPerPlus">+</button>
+        </div>
+      </div>
+      <button class="btn gold" id="hzCreate" style="width:100%" data-i18n="hifz.start">Start plan</button>
+    </div>
   </div>
   
   <div id="quran-read-view">
     <div class="card">
-      <h2>Today's reading</h2>
+      <h2 data-i18n="quran.todaysReading">Today's reading</h2>
       <div class="pages-ctl">
         <button class="btn round" id="pgMinus">−</button>
         <div class="pv" id="pgVal">0</div>
@@ -460,12 +802,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
       <div class="small-note">pages read today · goal: <b id="goalShow">2</b>/day</div>
     </div>
     <div class="card">
-      <h2>Khatmah progress <span class="sub" id="khatmahPct">0%</span></h2>
+      <h2><span data-i18n="quran.khatmah">Khatmah progress</span> <span class="sub" id="khatmahPct">0%</span></h2>
       <div class="khatmah-bar"><div class="khatmah-fill" id="khatmahFill" style="width:0%"></div></div>
       <div class="small-note" id="khatmahNote">0 / 604 pages</div>
       <div class="small-note" id="khatmahEta"></div>
       <div class="tasbih-controls" style="margin-top:14px; flex-direction:column; gap:10px">
-        <button class="btn gold" id="khatmahContinue" style="display:none">Continue reading</button>
+        <button class="btn gold" id="khatmahContinue" style="display:none" data-i18n="quran.continue">Continue reading</button>
         <button class="btn" id="khatmahReset">Start new khatmah</button>
       </div>
     </div>
@@ -473,22 +815,22 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   
   <div id="quran-listen-view" style="display:none">
      <div id="ql-reciter-sel">
-        <h2 style="font-family:'Manrope',sans-serif; margin-bottom:12px; color:var(--ivory);">Select Reciter</h2>
+        <h2 style="font-family:'Manrope',sans-serif; margin-bottom:12px; color:var(--ivory);" data-i18n="quran.selectReciter">Select Reciter</h2>
         <input type="text" id="ql-reciter-search" class="s-input" placeholder="Search reciters..." style="width:100%; margin-bottom:12px">
         <div id="ql-reciter-list" class="ql-list"></div>
      </div>
      
      <div id="ql-surah-sel" style="display:none">
-        <button class="btn" id="ql-back-reciter" style="margin-bottom:12px; background:transparent; border:1px solid var(--brass); color:var(--brass); padding:8px 16px; border-radius:12px; font-weight:600;" onclick="showListenReciters()">← Back to Reciters</button>
+        <button class="btn" id="ql-back-reciter" style="margin-bottom:12px; background:transparent; border:1px solid var(--brass); color:var(--brass); padding:8px 16px; border-radius:12px; font-weight:600;" onclick="showListenReciters()" data-i18n="quran.selectReciterBack">← Back to Reciters</button>
         <h2 id="ql-reciter-name" style="font-family:'Manrope',sans-serif; margin-bottom:16px; color:var(--ivory);"></h2>
         <div id="ql-surah-list" class="ql-list"></div>
      </div>
      
      <div id="ql-player-view" style="display:none" class="card">
-        <button class="btn" id="ql-back-surah" style="margin-bottom:12px; font-size:12px; padding:6px 12px; background:transparent; border:1px solid var(--brass); color:var(--brass); border-radius:12px; font-weight:600;" onclick="showListenSurahs()">← Change Surah</button>
+        <button class="btn" id="ql-back-surah" style="margin-bottom:12px; font-size:12px; padding:6px 12px; background:transparent; border:1px solid var(--brass); color:var(--brass); border-radius:12px; font-weight:600;" onclick="showListenSurahs()" data-i18n="quran.changeSurahBack">← Change Surah</button>
         <div style="text-align:center; padding: 20px 0;">
            <h2 id="ql-playing-surah" style="font-family:'Amiri',serif; font-size:32px; color:var(--brass); margin-bottom:4px">سورة</h2>
-           <div id="ql-playing-reciter" style="color:var(--mist); font-size:16px; margin-bottom:24px">Reciter</div>
+           <div id="ql-playing-reciter" style="color:var(--mist); font-size:16px; margin-bottom:24px" data-i18n="quran.reciter">Reciter</div>
            
            <div class="seek-wrap" style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
              <span id="ql-time-cur" style="font-size:12px; color:var(--mist); width:40px; text-align:right">0:00</span>
@@ -506,7 +848,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
            
            <div style="margin-top:24px">
              <label style="display:flex; align-items:center; justify-content:center; gap:8px; color:var(--mist); font-size:14px; cursor:pointer;">
-                <input type="checkbox" id="ql-repeat"> Repeat Surah
+                <input type="checkbox" id="ql-repeat"> <span data-i18n="quran.repeat">Repeat Surah</span>
              </label>
            </div>
         </div>
@@ -517,7 +859,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
   <!-- SADAQAH -->
   <section class="page" id="page-sadaqah">
     <div class="card">
-      <h2>Support Us <span class="sub">help keep Wird ad-free</span></h2>
+      <h2><span data-i18n="support.title">Support Us</span> <span class="sub" data-i18n="support.sub">help keep Wird ad-free</span></h2>
       <div id="supportChips" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
         <div class="chips" style="margin-bottom: 0;">
           <div class="chip support-chip" data-amt="5">5 AED</div>
@@ -536,64 +878,84 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
         <button class="btn gold" id="sAdd">Support 💛</button>
       </div>
     </div>
+    <div class="card wp-entry" id="plusEntrySupport">
+      <div class="wp-entry-mark">وِرد</div>
+      <div style="flex:1">
+        <div class="t">Wird Plus</div>
+        <div class="d" data-i18n="plus.subSupport">A recurring way to support development</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
   </section>
 
   <!-- SETTINGS -->
   <section class="page" id="page-settings">
     <div class="card">
-      <h2>Account</h2>
+      <h2 data-i18n="set.language">Language</h2>
+      <div class="lang-wrap" id="langPicker"></div>
+    </div>
+    <div class="card wp-entry" id="plusEntrySettings">
+      <div class="wp-entry-mark">وِرد</div>
+      <div style="flex:1">
+        <div class="t">Wird Plus</div>
+        <div class="d" data-i18n="plus.subSettings">Extras that support the app — worship stays free</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="set.account">Account</h2>
       <div class="row" style="align-items: center;">
          <div id="accountInfo">
            <div class="t" id="accountName">Loading...</div>
            <div class="d" id="accountEmail"></div>
          </div>
          <div style="display:flex; gap: 8px;">
-            <button class="btn" id="btnSignOut" style="display:none;">Sign out</button>
-            <button class="btn gold" id="btnSignInPrompt" style="display:none;">Sign in</button>
+            <button class="btn" id="btnSignOut" style="display:none;" data-i18n="set.signOut">Sign out</button>
+            <button class="btn gold" id="btnSignInPrompt" style="display:none;" data-i18n="set.signIn">Sign in</button>
          </div>
       </div>
     </div>
     <div class="card">
-      <h2>Reminders</h2>
+      <h2 data-i18n="set.reminders">Reminders</h2>
       <div class="row">
-        <div><div class="t">Enable notifications</div><div class="d">Prayer times + adhkar reminders</div></div>
+        <div><div class="t" data-i18n="set.enableNotif">Enable notifications</div><div class="d" data-i18n="set.notifSub">Prayer times + adhkar reminders</div></div>
         <div class="switch" id="sw-notif"></div>
       </div>
       <div class="row">
-        <div><div class="t">Prayer time alerts</div><div class="d">At each prayer time</div></div>
+        <div><div class="t" data-i18n="set.prayerAlerts">Prayer time alerts</div><div class="d" data-i18n="set.atEach">At each prayer time</div></div>
         <div class="switch" id="sw-notif-prayer"></div>
       </div>
       <div class="row">
-        <div><div class="t">Adhkar reminders</div><div class="d">After Fajr &amp; after Asr</div></div>
+        <div><div class="t" data-i18n="set.adhkarRem">Adhkar reminders</div><div class="d">After Fajr &amp; after Asr</div></div>
         <div class="switch" id="sw-notif-adhkar"></div>
       </div>
       <div class="perm-note" id="notifStatus"></div>
     </div>
     <div class="card" id="athan-voice-card">
-      <h2>Athan voice <span class="sub">صوت الأذان</span></h2>
+      <h2 data-i18n="set.athanVoice">Athan voice</h2>
       <div id="athan-voice-list" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
     <div class="card">
-      <h2>Location &amp; prayer times</h2>
+      <h2 data-i18n="set.location">Location &amp; prayer times</h2>
       <div class="row">
         <div><div class="t" id="locName">Al Ain, UAE</div><div class="d" id="locCoords">24.13°N, 55.80°E · UTC+4</div></div>
-        <button class="btn" id="useGPS">Use my GPS</button>
+        <button class="btn" id="useGPS" data-i18n="set.useGps">Use my GPS</button>
       </div>
       <div class="perm-note">Times computed on-device (Umm al-Qura method: Fajr 18.5°, Isha = Maghrib + 90 min). Always confirm with your local masjid.</div>
     </div>
     <div class="card">
-      <h2>Quran goal</h2>
+      <h2 data-i18n="set.quranGoal">Quran goal</h2>
       <div class="pages-ctl">
         <button class="btn round" id="goalMinus">−</button>
         <div class="pv" id="goalVal">2</div>
         <button class="btn round" id="goalPlus">+</button>
       </div>
-      <div class="small-note">pages per day target</div>
+      <div class="small-note" data-i18n="set.goalSub">pages per day target</div>
     </div>
     <div class="card">
-      <h2>Data</h2>
+      <h2 data-i18n="set.data">Data</h2>
       <div class="tasbih-controls">
-        <button class="btn danger" id="wipeData">Reset all data</button>
+        <button class="btn danger" id="wipeData" data-i18n="set.resetAll">Reset all data</button>
       </div>
     </div>
   </section>
@@ -601,11 +963,11 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 </div>
 
 <nav>
-  <button class="tab active" data-p="today"><span class="ico">🕌</span>Today</button>
-  <button class="tab" data-p="adhkar"><span class="ico">📿</span>Adhkar</button>
-  <button class="tab" data-p="quran"><span class="ico">📖</span>Quran</button>
-  <button class="tab" data-p="sadaqah"><span class="ico">💛</span>Support</button>
-  <button class="tab" data-p="settings"><span class="ico">⚙️</span>Settings</button>
+  <button class="tab active" data-p="today"><span class="ico">🕌</span><span data-i18n="nav.today">Today</span></button>
+  <button class="tab" data-p="adhkar"><span class="ico">📿</span><span data-i18n="nav.adhkar">Adhkar</span></button>
+  <button class="tab" data-p="quran"><span class="ico">📖</span><span data-i18n="nav.quran">Quran</span></button>
+  <button class="tab" data-p="sadaqah"><span class="ico">💛</span><span data-i18n="nav.support">Support</span></button>
+  <button class="tab" data-p="settings"><span class="ico">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
 </nav>
 
 <script>
@@ -686,7 +1048,7 @@ const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 /* ================= state ================= */
 let S={days:{},khatmah:0,sadaqah:[],settings:{
   lat:24.13,lng:55.80,tz:4,locName:"Al Ain, UAE",
-  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark'
+  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en'
 },reader:{currentPage:1,furthestPageCounted:0,lastReadTimestamp:0}};
 
 let ui={session:"morning",seqIdx:0,seqCount:0};
@@ -702,7 +1064,7 @@ async function load(){
     const val=localStorage.getItem("wird-data");
     if(val){
       const d=JSON.parse(val);
-      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',...S.settings,...(d.settings||{})}};
+      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',...S.settings,...(d.settings||{})}};
       if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
     }
   }catch(e){/* first run */}
@@ -815,8 +1177,9 @@ async function loadQuranPage(p) {
   const pctDiv = document.getElementById("qrPct");
   
   txtDiv.classList.add("animating");
+  txtDiv.classList.remove("revealed");
   await new Promise(r => setTimeout(r, 150));
-  
+
   txtDiv.style.fontSize = sizeMap[S.settings.quranFontSize || 'M'];
   txtDiv.innerHTML = '<div class="qr-skeleton"><div class="qr-skel-line"></div><div class="qr-skel-line"></div><div class="qr-skel-line"></div><div class="qr-skel-line"></div><div class="qr-skel-line"></div></div>';
   txtDiv.classList.remove("animating");
@@ -856,21 +1219,41 @@ async function loadQuranPage(p) {
 }
 
 function openReader() {
+  qrJumpPage = null;
   const qr = document.getElementById("quran-reader");
   qr.style.display = "flex";
   qr.setAttribute("data-theme", S.settings.quranTheme || 'dark');
   loadQuranPage(S.reader.currentPage);
 }
 
+/* Transient reading session (Al-Kahf, hifz, surah jump).
+   Never moves the khatmah bookmark or counts pages. */
+let qrJumpPage = null;
+function openReaderAt(page, testing) {
+  qrJumpPage = Math.max(1, Math.min(QURAN_PAGES, page));
+  const qr = document.getElementById("quran-reader");
+  qr.style.display = "flex";
+  qr.setAttribute("data-theme", S.settings.quranTheme || 'dark');
+  /* Test mode only blurs the rendered text visually — the Quranic text
+     itself is never altered, trimmed or reformatted. */
+  qr.classList.toggle("qr-testing", !!testing);
+  loadQuranPage(qrJumpPage);
+}
+
 function closeReader() {
   document.getElementById("quran-reader").style.display = "none";
+  if (qrJumpPage !== null) { qrJumpPage = null; return; }
   S.reader.lastReadTimestamp = Date.now();
   save();
   renderQuran();
-  toast("Bookmark saved ✓");
+  toast(t("reader.bookmarkSaved"));
 }
 
 function qrNext() {
+   if (qrJumpPage !== null) {
+      if (qrJumpPage < QURAN_PAGES) { qrJumpPage++; loadQuranPage(qrJumpPage); }
+      return;
+   }
    if (S.reader.currentPage > S.reader.furthestPageCounted) {
       S.reader.furthestPageCounted = S.reader.currentPage;
       S.khatmah = Math.min(QURAN_PAGES, S.khatmah + 1);
@@ -883,12 +1266,16 @@ function qrNext() {
       save();
       loadQuranPage(S.reader.currentPage);
    } else {
-      toast("Khatmah complete! تقبّل الله 🎉");
+      toast(t("reader.khatmahCompleteToast")+" تقبّل الله 🎉");
       closeReader();
    }
 }
 
 function qrPrev() {
+   if (qrJumpPage !== null) {
+      if (qrJumpPage > 1) { qrJumpPage--; loadQuranPage(qrJumpPage); }
+      return;
+   }
    if (S.reader.currentPage > 1) {
       S.reader.currentPage--;
       save();
@@ -975,10 +1362,491 @@ function renderDate(){
   try{hijri=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{day:"numeric",month:"long"}).format(now)}catch(e){}
   document.getElementById("dateline").innerHTML="<b>"+greg+"</b>"+(hijri?hijri+" هـ":"");
   const wd=now.getDay();
-  document.getElementById("fastHint").textContent=(wd===1||wd===4)?"Sunnah — "+(wd===1?"Monday":"Thursday")+" صيام":"صيام تطوّع";
+  document.getElementById("fastHint").textContent=(wd===1||wd===4)?tf("today.sunnahFast",{day:t(wd===1?"day.monday":"day.thursday")}):t("today.voluntaryFast");
   const h=now.getHours();
-  document.getElementById("greet").textContent=h<12?"Sabah al-khayr ☀️ May your day be blessed":h<17?"Keep going — your afternoon wird awaits":"Masa al-khayr 🌙 Finish your day strong";
+  document.getElementById("greet").textContent=h<12?t("today.greetMorning"):h<17?t("today.greetAfternoon"):t("today.greetEvening");
 }
+
+/* ================= hijri calendar ================= */
+const HIJRI_MONTHS=[
+  {ar:"محرم",en:"Muharram"},{ar:"صفر",en:"Safar"},
+  {ar:"ربيع الأول",en:"Rabi' al-Awwal"},{ar:"ربيع الآخر",en:"Rabi' al-Thani"},
+  {ar:"جمادى الأولى",en:"Jumada al-Ula"},{ar:"جمادى الآخرة",en:"Jumada al-Akhirah"},
+  {ar:"رجب",en:"Rajab"},{ar:"شعبان",en:"Sha'ban"},
+  {ar:"رمضان",en:"Ramadan"},{ar:"شوال",en:"Shawwal"},
+  {ar:"ذو القعدة",en:"Dhul-Qi'dah"},{ar:"ذو الحجة",en:"Dhul-Hijjah"}
+];
+const HIJRI_EVENTS=[
+  {m:1,d:1,ar:"رأس السنة الهجرية",en:"Islamic New Year"},
+  {m:1,d:10,ar:"يوم عاشوراء",en:"Day of Ashura — fasting encouraged"},
+  {m:3,d:12,ar:"المولد النبوي",en:"Mawlid an-Nabi ﷺ"},
+  {m:7,d:27,ar:"الإسراء والمعراج",en:"Al-Isra wal-Mi'raj"},
+  {m:8,d:15,ar:"ليلة النصف من شعبان",en:"Mid-Sha'ban"},
+  {m:9,d:1,ar:"أول رمضان",en:"First of Ramadan"},
+  {m:9,d:21,ar:"العشر الأواخر",en:"Last ten nights — seek Laylat al-Qadr"},
+  {m:10,d:1,ar:"عيد الفطر",en:"Eid al-Fitr"},
+  {m:12,d:9,ar:"يوم عرفة",en:"Day of Arafah — fasting for non-pilgrims"},
+  {m:12,d:10,ar:"عيد الأضحى",en:"Eid al-Adha"},
+  {m:12,d:11,ar:"أيام التشريق",en:"Days of Tashriq"}
+];
+let hcCursor=null;
+function hijriOf(d){
+  try{
+    const p=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{day:"numeric",month:"numeric",year:"numeric"}).formatToParts(d);
+    const g=t=>parseInt((p.find(x=>x.type===t)||{}).value,10);
+    const o={d:g("day"),m:g("month"),y:g("year")};
+    return (isNaN(o.d)||isNaN(o.m)||isNaN(o.y))?null:o;
+  }catch(e){return null}
+}
+function hcAddDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function hijriMonthStart(d){
+  let x=new Date(d);x.setHours(12,0,0,0);
+  for(let i=0;i<40;i++){
+    const h=hijriOf(x);
+    if(!h)return null;
+    if(h.d===1)return x;
+    x=hcAddDays(x,-1);
+  }
+  return null;
+}
+function hijriShiftMonth(d,dir){
+  const start=hijriMonthStart(d);
+  if(!start)return d;
+  return hijriMonthStart(dir>0?hcAddDays(start,32):hcAddDays(start,-1))||d;
+}
+function renderHijriCal(){
+  const grid=document.getElementById("hcGrid"),evBox=document.getElementById("hcEvents");
+  const start=hijriMonthStart(hcCursor||new Date());
+  if(!start){
+    grid.innerHTML='<div class="hc-empty-note" style="grid-column:1/-1">Hijri calendar isn\'t supported on this device.</div>';
+    evBox.innerHTML="";
+    document.getElementById("hcMonthAr").textContent="—";
+    document.getElementById("hcMonthEn").textContent="—";
+    return;
+  }
+  const hs=hijriOf(start),mn=HIJRI_MONTHS[hs.m-1];
+  document.getElementById("hcMonthAr").textContent=mn.ar+" "+toArNum(hs.y);
+  document.getElementById("hcMonthEn").textContent=mn.en+" "+hs.y+" AH";
+  const days=[];let x=new Date(start);
+  for(let i=0;i<31;i++){
+    const h=hijriOf(x);
+    if(!h||h.m!==hs.m)break;
+    days.push({greg:new Date(x),hd:h.d});
+    x=hcAddDays(x,1);
+  }
+  const todayStr=new Date().toDateString();
+  let html="";
+  ["S","M","T","W","T","F","S"].forEach(w=>html+='<div class="hc-dow">'+w+'</div>');
+  for(let i=0;i<start.getDay();i++)html+='<div class="hc-cell empty"></div>';
+  days.forEach(o=>{
+    const hasEv=HIJRI_EVENTS.some(e=>e.m===hs.m&&e.d===o.hd);
+    const isToday=o.greg.toDateString()===todayStr;
+    html+='<div class="hc-cell'+(isToday?" today":"")+'"><div>'+o.hd+'</div>'
+      +'<div class="hc-greg">'+o.greg.getDate()+'</div>'
+      +(hasEv?'<div class="hc-dot"></div>':'')+'</div>';
+  });
+  grid.innerHTML=html;
+  const evs=HIJRI_EVENTS.filter(e=>e.m===hs.m);
+  if(!evs.length){evBox.innerHTML='<div class="hc-empty-note">No marked events this month.</div>';return}
+  let eh="";
+  evs.forEach(e=>{
+    const match=days.find(o=>o.hd===e.d);
+    const isToday=match&&match.greg.toDateString()===todayStr;
+    const greg=match?match.greg.toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"";
+    eh+='<div class="hc-event'+(isToday?" is-today":"")+'">'
+      +'<div class="hc-event-day">'+e.d+'</div><div>'
+      +'<div class="hc-event-ar">'+e.ar+'</div>'
+      +'<div class="hc-event-en">'+e.en+(greg?" · "+greg:"")+'</div></div></div>';
+  });
+  evBox.innerHTML=eh;
+}
+function openHijriCal(){hcCursor=new Date();renderHijriCal();document.getElementById("hijri-cal").style.display="flex"}
+function closeHijriCal(){document.getElementById("hijri-cal").style.display="none"}
+
+/* ================= i18n =================
+   UI chrome only. Quranic text, adhkar, duas and dhikr are never
+   translated — they stay in their authentic Arabic wherever they appear. */
+const LANGS=[
+  {id:"en",label:"English",native:"English",rtl:false},
+  {id:"ar",label:"Arabic",native:"العربية",rtl:true},
+  {id:"ur",label:"Urdu",native:"اردو",rtl:true},
+  {id:"fil",label:"Filipino",native:"Filipino",rtl:false},
+  {id:"es",label:"Spanish",native:"Español",rtl:false}
+];
+const I18N={
+  "nav.today":      ["Today","اليوم","آج","Ngayon","Hoy"],
+  "nav.adhkar":     ["Adhkar","الأذكار","اذکار","Adhkar","Adhkar"],
+  "nav.quran":      ["Quran","القرآن","قرآن","Quran","Corán"],
+  "nav.support":    ["Support","الدعم","معاونت","Suporta","Apoyo"],
+  "nav.settings":   ["Settings","الإعدادات","ترتیبات","Mga Setting","Ajustes"],
+  "app.loading":    ["Loading your wird…","جارٍ تحميل وِردك…","آپ کا ورد لوڈ ہو رہا ہے…","Nilo-load ang iyong wird…","Cargando tu wird…"],
+  "today.next":     ["Next prayer","الصلاة القادمة","اگلی نماز","Susunod na dasal","Próxima oración"],
+  "today.streak":   ["day streak","يوم متتالٍ","دن مسلسل","araw na sunod-sunod","días seguidos"],
+  "today.all5":     ["all 5 prayers","الصلوات الخمس","پانچوں نمازیں","lahat ng 5 dasal","las 5 oraciones"],
+  "today.prayers":  ["Prayers","الصلوات","نمازیں","Mga Dasal","Oraciones"],
+  "today.habits":   ["Today's habits","أعمال اليوم","آج کے اعمال","Mga gawain ngayon","Hábitos de hoy"],
+  "today.morning":  ["Morning adhkar","أذكار الصباح","صبح کے اذکار","Adhkar sa umaga","Adhkar de la mañana"],
+  "today.evening":  ["Evening adhkar","أذكار المساء","شام کے اذکار","Adhkar sa gabi","Adhkar de la tarde"],
+  "today.fasting":  ["Fasting today","صيام اليوم","آج کا روزہ","Pag-aayuno ngayon","Ayuno de hoy"],
+  "today.tasbih":   ["Tasbih","التسبيح","تسبیح","Tasbih","Tasbih"],
+  "today.afterPrayer":["after-prayer dhikr","ذكر بعد الصلاة","نماز کے بعد ذکر","dhikr pagkatapos ng dasal","dhikr tras la oración"],
+  "today.nextDhikr":["Next dhikr","الذكر التالي","اگلا ذکر","Susunod na dhikr","Siguiente dhikr"],
+  "common.reset":   ["Reset","إعادة","دوبارہ","I-reset","Reiniciar"],
+  "common.delete":  ["Delete","حذف","حذف کریں","Tanggalin","Eliminar"],
+  "common.read":    ["Read","قراءة","پڑھیں","Basahin","Leer"],
+  "common.test":    ["Test","اختبار","امتحان","Subukan","Prueba"],
+  "adhkar.list":    ["Adhkar checklist","قائمة الأذكار","اذکار کی فہرست","Listahan ng adhkar","Lista de adhkar"],
+  "adhkar.morning": ["Morning","الصباح","صبح","Umaga","Mañana"],
+  "adhkar.evening": ["Evening","المساء","شام","Gabi","Tarde"],
+  "quran.read":     ["Read","قراءة","پڑھیں","Basahin","Leer"],
+  "quran.listen":   ["Listen","استماع","سنیں","Makinig","Escuchar"],
+  "quran.hifz":     ["Hifz","حفظ","حفظ","Hifz","Hifz"],
+  "quran.todaysReading":["Today's reading","قراءة اليوم","آج کی تلاوت","Pagbasa ngayon","Lectura de hoy"],
+  "quran.khatmah":  ["Khatmah progress","تقدّم الختمة","ختمہ کی پیش رفت","Progreso ng khatmah","Progreso de la khatmah"],
+  "quran.continue": ["Continue reading","متابعة القراءة","پڑھنا جاری رکھیں","Magpatuloy sa pagbasa","Continuar leyendo"],
+  "quran.newKhatmah":["Start new khatmah","بدء ختمة جديدة","نیا ختمہ شروع کریں","Magsimula ng bagong khatmah","Iniciar nueva khatmah"],
+  "quran.selectReciter":["Select Reciter","اختر القارئ","قاری منتخب کریں","Pumili ng Reciter","Elegir recitador"],
+  "quran.reciter":  ["Reciter","القارئ","قاری","Reciter","Recitador"],
+  "quran.repeat":   ["Repeat Surah","تكرار السورة","سورہ دہرائیں","Ulitin ang Surah","Repetir sura"],
+  "hifz.newPlan":   ["New hifz plan","خطة حفظ جديدة","نیا حفظ منصوبہ","Bagong hifz plan","Nuevo plan de hifz"],
+  "hifz.addPlan":   ["Add another plan","إضافة خطة أخرى","ایک اور منصوبہ شامل کریں","Magdagdag ng plano","Añadir otro plan"],
+  "hifz.chooseJuz": ["Choose a juz","اختر جزءاً","جزو منتخب کریں","Pumili ng juz","Elige un yuz"],
+  "hifz.orRange":   ["Or a page range","أو نطاق صفحات","یا صفحات کی حد","O saklaw ng pahina","O un rango de páginas"],
+  "hifz.perDay":    ["Pages per day","صفحات في اليوم","روزانہ صفحات","Pahina bawat araw","Páginas por día"],
+  "hifz.start":     ["Start plan","ابدأ الخطة","منصوبہ شروع کریں","Simulan ang plano","Iniciar plan"],
+  "hifz.portion":   ["Today's portion","ورد اليوم","آج کا حصہ","Bahagi ngayon","Porción de hoy"],
+  "hifz.yourPlans": ["Your plans","خططك","آپ کے منصوبے","Mga plano mo","Tus planes"],
+  "hifz.hint":      ["Pick a juz, or set your own page range, and Wird will pace it for you.","اختر جزءاً أو حدّد نطاق صفحات، ووِرد ينظّم لك الوتيرة.","ایک جزو منتخب کریں یا صفحات کی حد مقرر کریں، ورد آپ کے لیے رفتار طے کرے گا۔","Pumili ng juz o itakda ang saklaw ng pahina, at ise-set ng Wird ang bilis para sa iyo.","Elige un yuz o define tu rango de páginas y Wird marcará el ritmo."],
+  "support.title":  ["Support Us","ادعمنا","ہماری معاونت کریں","Suportahan kami","Apóyanos"],
+  "support.sub":    ["help keep Wird ad-free","ساعد في إبقاء وِرد بلا إعلانات","ورد کو اشتہارات سے پاک رکھنے میں مدد کریں","tulungan kaming panatilihing walang ads ang Wird","ayuda a mantener Wird sin anuncios"],
+  "plus.subSettings":["Extras that support the app — worship stays free","إضافات تدعم التطبيق — والعبادات تبقى مجانية","ایپ کی معاونت کرنے والی اضافی سہولیات — عبادات مفت رہیں گی","Mga extra na sumusuporta sa app — libre pa rin ang pagsamba","Extras que apoyan la app — la adoración sigue siendo gratis"],
+  "plus.subSupport":["A recurring way to support development","طريقة متكررة لدعم التطوير","ترقی کی معاونت کا مستقل طریقہ","Paraan ng regular na suporta sa development","Una forma recurrente de apoyar el desarrollo"],
+  "set.account":    ["Account","الحساب","اکاؤنٹ","Account","Cuenta"],
+  "set.signOut":    ["Sign out","تسجيل الخروج","سائن آؤٹ","Mag-sign out","Cerrar sesión"],
+  "set.signIn":     ["Sign in","تسجيل الدخول","سائن ان","Mag-sign in","Iniciar sesión"],
+  "set.reminders":  ["Reminders","التذكيرات","یاد دہانیاں","Mga paalala","Recordatorios"],
+  "set.enableNotif":["Enable notifications","تفعيل الإشعارات","اطلاعات فعال کریں","I-enable ang notifications","Activar notificaciones"],
+  "set.notifSub":   ["Prayer times + adhkar reminders","أوقات الصلاة وتذكير الأذكار","نماز کے اوقات اور اذکار کی یاد دہانی","Oras ng dasal + paalala ng adhkar","Horarios de oración y adhkar"],
+  "set.prayerAlerts":["Prayer time alerts","تنبيهات أوقات الصلاة","نماز کے اوقات کی اطلاع","Alerto sa oras ng dasal","Avisos de oración"],
+  "set.atEach":     ["At each prayer time","عند كل وقت صلاة","ہر نماز کے وقت","Sa bawat oras ng dasal","En cada oración"],
+  "set.adhkarRem":  ["Adhkar reminders","تذكير الأذكار","اذکار کی یاد دہانی","Paalala ng adhkar","Recordatorios de adhkar"],
+  "set.athanVoice": ["Athan voice","صوت الأذان","اذان کی آواز","Boses ng athan","Voz del adhan"],
+  "set.location":   ["Location & prayer times","الموقع وأوقات الصلاة","مقام اور نماز کے اوقات","Lokasyon at oras ng dasal","Ubicación y horarios"],
+  "set.useGps":     ["Use my GPS","استخدام GPS","میرا GPS استعمال کریں","Gamitin ang GPS ko","Usar mi GPS"],
+  "set.quranGoal":  ["Quran goal","هدف القرآن","قرآن کا ہدف","Layunin sa Quran","Meta del Corán"],
+  "set.goalSub":    ["pages per day target","هدف الصفحات يومياً","روزانہ صفحات کا ہدف","target na pahina bawat araw","páginas por día"],
+  "set.data":       ["Data","البيانات","ڈیٹا","Data","Datos"],
+  "set.resetAll":   ["Reset all data","مسح جميع البيانات","تمام ڈیٹا حذف کریں","I-reset lahat ng data","Borrar todos los datos"],
+  "set.language":   ["Language","اللغة","زبان","Wika","Idioma"],
+  "day.monday":     ["Monday","الاثنين","پیر","Lunes","lunes"],
+  "day.thursday":   ["Thursday","الخميس","جمعرات","Huwebes","jueves"],
+  "today.sunnahFast":["Sunnah — {day} fasting","سنة — صيام {day}","سنت — {day} کا روزہ","Sunnah — pag-aayuno sa {day}","Sunnah — ayuno del {day}"],
+  "today.voluntaryFast":["Voluntary fasting","صيام تطوّع","نفلی روزہ","Kusang-loob na pag-aayuno","Ayuno voluntario"],
+  "today.greetMorning":["Good morning ☀️ May your day be blessed","صباح الخير ☀️ بارك الله في يومك","صبح بخیر ☀️ اللہ آپ کا دن بابرکت کرے","Magandang umaga ☀️ Pagpalain ang iyong araw","Buenos días ☀️ Que tu día sea bendecido"],
+  "today.greetAfternoon":["Keep going — your afternoon wird awaits","واصل — وردك المسائي بانتظارك","جاری رکھیں — آپ کا دوپہر کا ورد منتظر ہے","Ipagpatuloy — hinihintay ang iyong wird sa hapon","Sigue así — tu wird de la tarde te espera"],
+  "today.greetEvening":["Good evening 🌙 Finish your day strong","مساء الخير 🌙 أنهِ يومك بقوة","شام بخیر 🌙 اپنا دن مضبوطی سے مکمل کریں","Magandang gabi 🌙 Tapusin nang malakas ang iyong araw","Buenas tardes 🌙 Termina tu día con fuerza"],
+  "today.allDoneToast":["All 5 prayers done — streak alive!","اكتملت الصلوات الخمس — السلسلة مستمرة!","پانچوں نمازیں مکمل — تسلسل جاری ہے!","Tapos na ang 5 dasal — buhay ang streak!","¡Las 5 oraciones completas — racha activa!"],
+  "reader.bookmarkSaved":["Bookmark saved ✓","تم حفظ العلامة ✓","بک مارک محفوظ ہوگیا ✓","Na-save ang bookmark ✓","Marcador guardado ✓"],
+  "reader.khatmahCompleteToast":["Khatmah complete!","اكتملت الختمة!","ختمہ مکمل ہوگیا!","Tapos na ang khatmah!","¡Khatmah completada!"],
+  "reader.khatmahCompleteInline":["Khatmah complete!","اكتملت الختمة!","ختمہ مکمل ہوگیا!","Tapos na ang khatmah!","¡Khatmah completada!"],
+  "quran.pagesUnit": ["pages","صفحة","صفحات","pahina","páginas"],
+  "quran.continueReading":["Continue reading — Page {n}","متابعة القراءة — صفحة {n}","تلاوت جاری رکھیں — صفحہ {n}","Magpatuloy sa pagbasa — Pahina {n}","Continuar leyendo — Página {n}"],
+  "quran.etaLine":  ["~{n} days left at your pace","~{n} يوماً متبقياً بوتيرتك","آپ کی رفتار سے ~{n} دن باقی","~{n} araw na lang sa bilis mo","~{n} días restantes a tu ritmo"],
+  "quran.goalReachedToast":["Daily Quran goal reached — ما شاء الله","تحقق هدف اليوم من القرآن — ما شاء الله","آج کا قرآن ہدف مکمل — ما شاء الله","Naabot ang pang-araw-araw na goal — ما شاء الله","Meta diaria del Corán alcanzada — ما شاء الله"],
+  "quran.resetConfirm":["This will reset your progress to 0/604. Continue?","سيتم إعادة تقدّمك إلى 0/604. متابعة؟","یہ آپ کی پیش رفت 0/604 پر ری سیٹ کر دے گا۔ جاری رکھیں؟","Ire-reset nito ang progreso mo sa 0/604. Magpatuloy?","Esto reiniciará tu progreso a 0/604. ¿Continuar?"],
+  "quran.selectReciterBack":["← Back to Reciters","← العودة إلى القرّاء","← قاریوں کی طرف واپس","← Bumalik sa mga Reciter","← Volver a recitadores"],
+  "quran.changeSurahBack":["← Change Surah","← تغيير السورة","← سورہ تبدیل کریں","← Palitan ang Surah","← Cambiar sura"],
+  "quran.loadingReciters":["Loading reciters...","جارٍ تحميل القرّاء...","قاری لوڈ ہو رہے ہیں...","Nilo-load ang mga reciter...","Cargando recitadores..."],
+  "quran.failedReciters":["Failed to load reciters. Check internet.","تعذّر تحميل القرّاء. تحقق من الإنترنت.","قاری لوڈ نہیں ہو سکے۔ انٹرنیٹ چیک کریں۔","Hindi na-load ang mga reciter. Suriin ang internet.","No se pudieron cargar los recitadores. Revisa tu internet."],
+  "common.retry":   ["Retry","إعادة المحاولة","دوبارہ کوشش کریں","Subukan Muli","Reintentar"],
+  "jm.ghusl":       ["Ghusl before Jumu'ah","غُسل الجمعة","جمعہ سے پہلے غسل","Paliligo bago ang Jumu'ah","Ghusl antes de Yumu'ah"],
+  "jm.early":       ["Going early to the masjid","التبكير إلى المسجد","مسجد جلدی جانا","Maagang pagpunta sa masjid","Ir temprano a la mezquita"],
+  "jm.kahf":        ["Reading Surah Al-Kahf","قراءة سورة الكهف","سورہ کہف کی تلاوت","Pagbasa ng Surah Al-Kahf","Leer la Surah Al-Kahf"],
+  "jm.salawat":     ["Abundant salawat on the Prophet ﷺ","الإكثار من الصلاة على النبي ﷺ","نبی کریم ﷺ پر کثرت سے درود","Maraming salawat sa Propeta ﷺ","Abundante salawat sobre el Profeta ﷺ"],
+  "jm.dua":         ["Du'a in the hour of response","الدعاء في ساعة الإجابة","ساعتِ اجابت میں دعا","Du'a sa oras ng pagtugon","Du'a en la hora de la respuesta"],
+  "jm.saahNow":     ["Sa'at al-Ijabah — now","ساعة الإجابة — الآن","ساعتِ اجابت — ابھی","Sa'at al-Ijabah — ngayon","Sa'at al-Ijabah — ahora"],
+  "jm.saahDesc":    ["The final hour before Maghrib · {min} min left","الساعة الأخيرة قبل المغرب · باقي {min} دقيقة","مغرب سے پہلے کا آخری گھنٹہ · {min} منٹ باقی","Ang huling oras bago ang Maghrib · {min} minuto na lang","La última hora antes del Magrib · quedan {min} min"],
+  "jm.saahIdleTitle":["Sa'at al-Ijabah","ساعة الإجابة","ساعتِ اجابت","Sa'at al-Ijabah","Sa'at al-Ijabah"],
+  "jm.saahIdleDesc":["The last hour before Maghrib — begins around {time}.","الساعة الأخيرة قبل المغرب — تبدأ حوالي {time}.","مغرب سے پہلے کا آخری گھنٹہ — تقریباً {time} بجے شروع ہوتا ہے۔","Ang huling oras bago ang Maghrib — magsisimula ng {time}.","La última hora antes del Magrib — comienza alrededor de las {time}."],
+  "hz.deleteConfirm":['Delete "{name}"? Its memorisation progress will be removed.','حذف "{name}"؟ سيتم حذف تقدّم الحفظ.','"{name}" حذف کریں؟ حفظ کی پیش رفت ختم ہو جائے گی۔','Tanggalin ang "{name}"? Mababawi ang progreso ng pagsasaulo.','¿Eliminar "{name}"? Se perderá el progreso de memorización.'],
+  "hz.checkRange":  ["Check the page range","تحقق من نطاق الصفحات","صفحات کی حد چیک کریں","Suriin ang saklaw ng pahina","Revisa el rango de páginas"],
+  "hz.planStarted": ["Plan started","بدأت الخطة","منصوبہ شروع ہوگیا","Nagsimula ang plano","Plan iniciado"],
+  "hz.pageMarked":  ["Page {n} marked","تم تمييز صفحة {n}","صفحہ {n} نشان زد ہوگیا","Minarkahan ang pahina {n}","Página {n} marcada"],
+  "hz.rangeName":   ["Pages {from}–{to}","صفحات {from}–{to}","صفحات {from}–{to}","Pahina {from}–{to}","Páginas {from}–{to}"],
+  "hz.juzName":     ["Juz {n}","الجزء {n}","پارہ {n}","Juz {n}","Yuz {n}"],
+  "hz.rangeSub":    ["Pages {from}–{to} · {per} pages a day","صفحات {from}–{to} · {per} صفحات يومياً","صفحات {from}–{to} · روزانہ {per} صفحات","Pahina {from}–{to} · {per} pahina bawat araw","Páginas {from}–{to} · {per} páginas al día"],
+  "hz.pageLabel":   ["Page {n}","صفحة {n}","صفحہ {n}","Pahina {n}","Página {n}"],
+  "hz.from":        ["From","من","سے","Mula","Desde"],
+  "hz.to":          ["To","إلى","تک","Hanggang","Hasta"],
+  "hz.memorised":   [" · memorised"," · محفوظة"," · یاد ہوگیا"," · na-memorize"," · memorizada"],
+  "hz.doneNote":    ["Plan complete","اكتملت الخطة","منصوبہ مکمل ہوگیا","Tapos na ang plano","Plan completado"],
+  "wp.preparingTitle":["Wird Plus is being prepared.","وِرد بلس قيد التحضير.","وِرد پلس تیار کیا جا رہا ہے۔","Inihahanda ang Wird Plus.","Wird Plus se está preparando."],
+  "wp.preparingSub":["Until then, the Support page keeps the app running.","حتى ذلك الحين، صفحة الدعم تُبقي التطبيق يعمل.","تب تک، سپورٹ پیج ایپ کو چلاتا رہتا ہے۔","Samantala, ang Support page ang nagpapatakbo ng app.","Mientras tanto, la página de Apoyo mantiene la app funcionando."],
+  "wp.subscribeCta":["Get Wird Plus","اشترك في وِرد بلس","وِرد پلس حاصل کریں","Kunin ang Wird Plus","Obtener Wird Plus"],
+  "set.notifBlocked":["Notifications are blocked in your browser settings. You'll see in-app reminders instead.","الإشعارات محظورة في إعدادات المتصفح. ستظهر التذكيرات داخل التطبيق بدلاً من ذلك.","اطلاعات آپ کے براؤزر کی ترتیبات میں مسدود ہیں۔ اس کے بجائے ایپ کے اندر یاد دہانیاں نظر آئیں گی۔","Naka-block ang mga notification sa browser settings mo. Makikita mo na lang ang mga paalala sa loob ng app.","Las notificaciones están bloqueadas en tu navegador. Verás recordatorios dentro de la app."],
+  "set.notifOnToast":["Reminders on 🔔","تفعيل التذكيرات 🔔","یاد دہانیاں آن ہیں 🔔","Naka-on ang mga paalala 🔔","Recordatorios activados 🔔"],
+  "set.notifOffToast":["Reminders off 🔕","إيقاف التذكيرات 🔕","یاد دہانیاں آف ہیں 🔕","Naka-off ang mga paalala 🔕","Recordatorios desactivados 🔕"],
+  "set.gpsUnavailable":["GPS not available here","تحديد الموقع غير متاح هنا","یہاں GPS دستیاب نہیں","Hindi available ang GPS dito","GPS no disponible aquí"],
+  "set.locationUpdated":["Location updated 📍","تم تحديث الموقع 📍","مقام اپ ڈیٹ ہوگیا 📍","Na-update ang lokasyon 📍","Ubicación actualizada 📍"],
+  "set.locationFailed":["Couldn't get location — using {loc}","تعذّر تحديد الموقع — باستخدام {loc}","مقام حاصل نہیں ہو سکا — {loc} استعمال ہو رہا ہے","Hindi nakuha ang lokasyon — ginagamit ang {loc}","No se pudo obtener la ubicación — usando {loc}"],
+  "set.resetting":  ["Resetting…","جارٍ إعادة الضبط…","ری سیٹ ہو رہا ہے…","Ini-reset…","Reiniciando…"],
+  "set.resetDone":  ["All data has been reset","تمت إعادة ضبط جميع البيانات","تمام ڈیٹا ری سیٹ ہوگیا","Na-reset na ang lahat ng data","Todos los datos han sido reiniciados"],
+  "set.resetFailed":["Failed to reset data. Please try again.","فشلت إعادة ضبط البيانات. حاول مرة أخرى.","ڈیٹا ری سیٹ نہیں ہو سکا۔ دوبارہ کوشش کریں۔","Hindi na-reset ang data. Subukan muli.","No se pudieron reiniciar los datos. Inténtalo de nuevo."],
+  "support.thanksToast":["Thank you for supporting Wird 💛","شكراً لدعمك وِرد 💛","وِرد کی معاونت کا شکریہ 💛","Salamat sa pagsuporta sa Wird 💛","Gracias por apoyar a Wird 💛"],
+  "account.guest":  ["Guest","ضيف","مہمان","Panauhin","Invitado"],
+  "account.guestSub":["Progress is saved locally. Sign in to sync across devices.","يُحفظ تقدّمك محلياً. سجّل الدخول للمزامنة عبر الأجهزة.","پیش رفت مقامی طور پر محفوظ ہے۔ آلات کے درمیان مطابقت کے لیے سائن ان کریں۔","Naka-save lokal ang progreso. Mag-sign in para mag-sync sa lahat ng device.","El progreso se guarda localmente. Inicia sesión para sincronizar entre dispositivos."],
+  "account.defaultName":["Wird User","مستخدم وِرد","ورد صارف","Wird User","Usuario de Wird"],
+  "account.loading":["Loading...","جارٍ التحميل...","لوڈ ہو رہا ہے...","Nilo-load...","Cargando..."],
+  "auth.offline":   ["Offline mode active","وضع عدم الاتصال نشط","آف لائن موڈ فعال ہے","Aktibo ang offline mode","Modo sin conexión activo"],
+  "auth.signOutConfirm":["Sign out?","تسجيل الخروج؟","سائن آؤٹ کریں؟","Mag-sign out?","¿Cerrar sesión?"],
+  "auth.resetSent": ["Password reset email sent!","تم إرسال بريد إعادة تعيين كلمة المرور!","پاس ورڈ ری سیٹ ای میل بھیج دیا گیا!","Naipadala na ang email para sa pag-reset ng password!","¡Correo de restablecimiento enviado!"],
+  "auth.signedIn":  ["Successfully signed in","تم تسجيل الدخول بنجاح","کامیابی سے سائن ان ہوگیا","Matagumpay na naka-sign in","Sesión iniciada correctamente"],
+  "auth.needCreds": ["Email and password required","البريد الإلكتروني وكلمة المرور مطلوبان","ای میل اور پاس ورڈ درکار ہیں","Kailangan ang email at password","Se requiere correo y contraseña"],
+  "auth.needEmail": ["Email required to reset password","البريد الإلكتروني مطلوب لإعادة تعيين كلمة المرور","پاس ورڈ ری سیٹ کے لیے ای میل درکار ہے","Kailangan ang email para i-reset ang password","Se requiere correo para restablecer la contraseña"],
+  "auth.errBadCreds":["Incorrect email or password.","البريد الإلكتروني أو كلمة المرور غير صحيحة.","غلط ای میل یا پاس ورڈ۔","Mali ang email o password.","Correo o contraseña incorrectos."],
+  "auth.errInUse":  ["This email is already registered.","هذا البريد الإلكتروني مسجّل مسبقاً.","یہ ای میل پہلے سے رجسٹرڈ ہے۔","Rehistrado na ang email na ito.","Este correo ya está registrado."],
+  "auth.errWeak":   ["Password should be at least 6 characters.","يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.","پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔","Dapat hindi bababa sa 6 na character ang password.","La contraseña debe tener al menos 6 caracteres."],
+  "auth.errInvalidEmail":["Please enter a valid email address.","الرجاء إدخال بريد إلكتروني صحيح.","براہ کرم درست ای میل ایڈریس درج کریں۔","Maglagay ng wastong email address.","Ingresa una dirección de correo válida."],
+  "auth.errNetwork":["Network error. Please check your connection.","خطأ في الشبكة. تحقق من اتصالك.","نیٹ ورک خرابی۔ اپنا کنکشن چیک کریں۔","May network error. Suriin ang koneksyon mo.","Error de red. Revisa tu conexión."]
+};
+function langIndex(){
+  const id=(S.settings&&S.settings.lang)||"en";
+  const i=LANGS.findIndex(l=>l.id===id);
+  return i<0?0:i;
+}
+function t(key){
+  const row=I18N[key];
+  if(!row)return key;
+  return row[langIndex()]||row[0];
+}
+function tf(key,params){
+  let s=t(key);
+  if(params)for(const k in params)s=s.split("{"+k+"}").join(params[k]);
+  return s;
+}
+function isRTL(){return !!LANGS[langIndex()].rtl}
+function applyI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k=el.getAttribute("data-i18n");
+    if(I18N[k])el.textContent=t(k);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    const k=el.getAttribute("data-i18n-ph");
+    if(I18N[k])el.placeholder=t(k);
+  });
+  const lang=LANGS[langIndex()];
+  document.documentElement.setAttribute("lang",lang.id);
+  document.documentElement.setAttribute("dir",lang.rtl?"rtl":"ltr");
+}
+function setLang(id){
+  if(!LANGS.some(l=>l.id===id))return;
+  S.settings.lang=id;
+  save();
+  applyI18n();
+  renderLangPicker();
+  if(typeof renderJumuah==="function")renderJumuah();
+  if(typeof renderHifz==="function"){renderHifzForm();renderHifz()}
+}
+function renderLangPicker(){
+  const box=document.getElementById("langPicker");
+  if(!box)return;
+  const cur=LANGS[langIndex()].id;
+  box.innerHTML=LANGS.map(l=>
+    '<div class="lang-chip'+(l.id===cur?" sel":"")+'" data-lang="'+l.id+'">'
+    +'<span class="nat">'+l.native+'</span><span class="lbl">'+l.label+'</span></div>').join("");
+  box.querySelectorAll(".lang-chip").forEach(c=>c.onclick=()=>setLang(c.dataset.lang));
+}
+
+/* ================= hifz ================= */
+/* Juz → first page of the 604-page Madani mushaf: juz 1 opens at page 1 and
+   every later juz begins 20 pages after the one before it. */
+function juzStart(n){return n<=1?1:20*(n-1)+2}
+function juzEnd(n){return n>=30?QURAN_PAGES:juzStart(n+1)-1}
+let hzForm={juz:null,per:1};
+function hifzState(){
+  if(!S.hifz)S.hifz={plans:[],activeId:null};
+  if(!Array.isArray(S.hifz.plans))S.hifz.plans=[];
+  return S.hifz;
+}
+function activePlan(){const h=hifzState();return h.plans.find(p=>p.id===h.activeId)||h.plans[0]||null}
+/* Name is computed at display time, not baked in at creation, so it
+   retranslates immediately when the user switches language. */
+function hifzPlanName(plan){
+  return plan.juz?tf("hz.juzName",{n:plan.juz}):tf("hz.rangeName",{from:plan.from,to:plan.to});
+}
+function renderHifzForm(){
+  const wrap=document.getElementById("hzJuzWrap");
+  if(!wrap)return;
+  let html="";
+  for(let i=1;i<=30;i++)html+='<div class="hz-juz'+(hzForm.juz===i?" sel":"")+'" data-juz="'+i+'">'+i+'</div>';
+  wrap.innerHTML=html;
+  wrap.querySelectorAll(".hz-juz").forEach(c=>c.onclick=()=>{
+    const v=parseInt(c.dataset.juz,10);
+    hzForm.juz=(hzForm.juz===v)?null:v;
+    if(hzForm.juz){document.getElementById("hzFrom").value="";document.getElementById("hzTo").value=""}
+    renderHifzForm();
+  });
+  document.getElementById("hzPerVal").textContent=hzForm.per;
+}
+function renderHifz(){
+  const h=hifzState(),plan=activePlan();
+  const card=document.getElementById("hifzActiveCard"),swCard=document.getElementById("hifzSwitchCard");
+  if(!card)return;
+  if(h.plans.length>1){
+    swCard.style.display="";
+    document.getElementById("hzSwitcher").innerHTML=h.plans.map(p=>
+      '<div class="hz-chip'+(plan&&p.id===plan.id?" sel":"")+'" data-hzid="'+p.id+'">'+hifzPlanName(p)+'</div>').join("");
+    document.querySelectorAll("#hzSwitcher .hz-chip").forEach(c=>{
+      c.onclick=()=>{hifzState().activeId=c.dataset.hzid;save();renderHifz()};
+    });
+  }else swCard.style.display="none";
+  document.getElementById("hifzEmptyNote").style.display=h.plans.length?"none":"";
+  document.getElementById("hifzFormTitle").textContent=h.plans.length?t("hifz.addPlan"):t("hifz.newPlan");
+  if(!plan){card.style.display="none";return}
+  card.style.display="";
+  const total=plan.to-plan.from+1,done=plan.done.length,pct=total?Math.round(done/total*100):0;
+  document.getElementById("hzName").textContent=hifzPlanName(plan);
+  document.getElementById("hzRange").textContent=tf("hz.rangeSub",{from:plan.from,to:plan.to,per:plan.per});
+  document.getElementById("hzFill").style.width=pct+"%";
+  document.getElementById("hzCount").textContent=done+" / "+total+" "+t("quran.pagesUnit");
+  document.getElementById("hzPct").textContent=pct+"%";
+  const remaining=[];
+  for(let p=plan.from;p<=plan.to;p++)if(plan.done.indexOf(p)===-1)remaining.push(p);
+  const box=document.getElementById("hzPortion");
+  const rows=[];
+  if(plan.done.length)rows.push({p:Math.max.apply(null,plan.done),done:true});
+  remaining.slice(0,plan.per).forEach(p=>rows.push({p:p,done:false}));
+  if(!remaining.length&&!rows.length){
+    box.innerHTML='<div class="hz-done-note">'+t("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>';
+    return;
+  }
+  box.innerHTML=rows.map(r=>
+    '<div class="hz-page-row'+(r.done?" done":"")+'">'
+    +'<div class="hz-page-num">'+r.p+'</div>'
+    +'<div class="hz-page-lbl">'+tf("hz.pageLabel",{n:r.p})+(r.done?t("hz.memorised"):"")+'</div>'
+    +'<button class="hz-act" data-hzread="'+r.p+'">'+t("common.read")+'</button>'
+    +'<button class="hz-act" data-hztest="'+r.p+'">'+t("common.test")+'</button>'
+    +'<button class="hz-act'+(r.done?" on":"")+'" data-hzdone="'+r.p+'">✓</button>'
+    +'</div>').join("")
+    +(remaining.length?"":'<div class="hz-done-note">'+t("hz.doneNote")+' — تقبّل الله<span class="ar">اللهم اجعل القرآن ربيع قلوبنا</span></div>');
+  box.querySelectorAll("[data-hzread]").forEach(b=>b.onclick=()=>openReaderAt(parseInt(b.dataset.hzread,10),false));
+  box.querySelectorAll("[data-hztest]").forEach(b=>b.onclick=()=>openReaderAt(parseInt(b.dataset.hztest,10),true));
+  box.querySelectorAll("[data-hzdone]").forEach(b=>b.onclick=()=>{
+    const pg=parseInt(b.dataset.hzdone,10),pl=activePlan(),i=pl.done.indexOf(pg);
+    if(i===-1){pl.done.push(pg);toast(tf("hz.pageMarked",{n:pg})+" ✓")}else pl.done.splice(i,1);
+    save();renderHifz();
+  });
+}
+function createHifzPlan(){
+  const h=hifzState();
+  let from,to,juz=null;
+  if(hzForm.juz){from=juzStart(hzForm.juz);to=juzEnd(hzForm.juz);juz=hzForm.juz}
+  else{
+    from=parseInt(document.getElementById("hzFrom").value,10);
+    to=parseInt(document.getElementById("hzTo").value,10);
+    if(!from||!to||from<1||to>QURAN_PAGES||from>to){toast(t("hz.checkRange"));return}
+  }
+  const plan={id:"hz"+Date.now(),juz:juz,from:from,to:to,per:hzForm.per,done:[],created:Date.now()};
+  h.plans.push(plan);h.activeId=plan.id;
+  hzForm={juz:null,per:1};
+  document.getElementById("hzFrom").value="";document.getElementById("hzTo").value="";
+  save();renderHifzForm();renderHifz();
+  toast(t("hz.planStarted")+" — بالتوفيق");
+}
+function deleteHifzPlan(){
+  const h=hifzState(),plan=activePlan();
+  if(!plan)return;
+  if(!confirm(tf("hz.deleteConfirm",{name:hifzPlanName(plan)})))return;
+  h.plans=h.plans.filter(p=>p.id!==plan.id);
+  h.activeId=h.plans.length?h.plans[0].id:null;
+  save();renderHifzForm();renderHifz();
+}
+
+/* ================= wird plus ================= */
+/* Pricing and the subscription link are placeholders. Set PLUS_LINK to a real
+   Ziina subscription link to switch the screen from "being prepared" to a
+   working call to action. Plus only ever adds extras — nothing that exists
+   today moves behind it. */
+const PLUS_LINK="PASTE_PLUS_LINK_HERE";
+const PLUS_PRICE={amount:"AED 19",per:"per year"};
+const PLUS_FEATURES=[
+  {t:"Insights & trends",   d:"Monthly and yearly view of your prayers, adhkar and reading.", ar:"إحصاءات شهرية وسنوية"},
+  {t:"Multiple hifz plans", d:"Run more than one memorisation plan side by side.",            ar:"أكثر من خطة حفظ"},
+  {t:"More reader themes",  d:"Extra page themes and font sizes in the Quran reader.",        ar:"سمات إضافية للقارئ"},
+  {t:"Family sharing",      d:"Share Plus with up to five people in your household.",         ar:"مشاركة عائلية"},
+  {t:"Early access",        d:"New features reach Plus members first.",                       ar:"وصول مبكر للمزايا"}
+];
+function renderWirdPlus(){
+  const box=document.getElementById("wpFeatures"),cta=document.getElementById("wpCta");
+  if(!box||!cta)return;
+  box.innerHTML=PLUS_FEATURES.map(f=>
+    '<div class="wp-feat"><div class="ic">✦</div><div>'
+    +'<div class="t">'+f.t+'</div>'
+    +'<div class="d">'+f.d+' <span class="ar">'+f.ar+'</span></div>'
+    +'</div></div>').join("");
+  if(PLUS_LINK==="PASTE_PLUS_LINK_HERE"){
+    cta.innerHTML='<div class="wp-soon">'+t("wp.preparingTitle")+'<br>'+t("wp.preparingSub")+'</div>';
+  }else{
+    cta.innerHTML='<div class="wp-price"><div class="amt">'+PLUS_PRICE.amount+'</div>'
+      +'<div class="per">'+PLUS_PRICE.per+'</div></div>'
+      +'<button class="btn gold wp-cta" id="wpSubscribe">'+t("wp.subscribeCta")+'</button>';
+    document.getElementById("wpSubscribe").onclick=()=>window.open(PLUS_LINK,"_blank");
+  }
+}
+function openWirdPlus(){renderWirdPlus();document.getElementById("wird-plus").style.display="flex"}
+function closeWirdPlus(){document.getElementById("wird-plus").style.display="none"}
+
+/* ================= jumu'ah ================= */
+const KAHF_PAGE=293;
+const JUMUAH_SUNAN=[
+  {k:"ghusl",  ar:"غُسل الجمعة",                  key:"jm.ghusl"},
+  {k:"early",  ar:"التبكير إلى المسجد",            key:"jm.early"},
+  {k:"kahf",   ar:"قراءة سورة الكهف",              key:"jm.kahf", page:KAHF_PAGE},
+  {k:"salawat",ar:"الإكثار من الصلاة على النبي ﷺ", key:"jm.salawat"},
+  {k:"dua",    ar:"الدعاء في ساعة الإجابة",        key:"jm.dua"}
+];
+function isFriday(d){return (d||new Date()).getDay()===5}
+function jumuahOf(){const t=day();if(!t.jumuah)t.jumuah={};return t.jumuah}
+function renderJumuah(){
+  const card=document.getElementById("jumuahCard");
+  if(!card)return;
+  if(!isFriday()){card.style.display="none";return}
+  card.style.display="";
+  const j=jumuahOf();
+  let html="";
+  JUMUAH_SUNAN.forEach(s=>{
+    html+='<div class="jm-row'+(j[s.k]?" done":"")+'" data-jm="'+s.k+'">'
+      +'<div class="jm-check"></div>'
+      +'<div class="jm-txt"><div class="t">'+t(s.key)+'</div><div class="d">'+s.ar+'</div></div>'
+      +(s.page?'<button class="jm-go" data-jmpage="'+s.page+'">'+t("common.read")+'</button>':'')
+      +'</div>';
+  });
+  document.getElementById("jumuahSunan").innerHTML=html;
+  document.querySelectorAll("#jumuahSunan .jm-row").forEach(row=>{
+    row.onclick=()=>{const jj=jumuahOf();jj[row.dataset.jm]=!jj[row.dataset.jm];save();renderJumuah()};
+  });
+  document.querySelectorAll("#jumuahSunan .jm-go").forEach(b=>{
+    b.onclick=e=>{e.stopPropagation();openReaderAt(parseInt(b.dataset.jmpage,10))};
+  });
+  renderJumuahSaah();
+}
+function renderJumuahSaah(){
+  const box=document.getElementById("jumuahSaah");
+  if(!box||!isFriday())return;
+  if(!TIMES){box.innerHTML="";return}
+  const n=nowMins(),mg=TIMES.Maghrib,start=mg-60;
+  if(n>=start&&n<mg){
+    box.className="jm-saah";
+    box.innerHTML='<div class="t">'+t("jm.saahNow")+'</div><div class="d">'
+      +tf("jm.saahDesc",{min:'<b>'+Math.max(1,Math.ceil(mg-n))+'</b>'})
+      +'<span class="ar" style="display:block;margin-top:3px">لا يوافقها عبدٌ مسلمٌ يسأل اللهَ شيئاً إلا أعطاه إياه</span></div>';
+  }else{
+    box.className="jm-saah idle";
+    box.innerHTML='<div class="t">'+t("jm.saahIdleTitle")+'</div><div class="d">'
+      +tf("jm.saahIdleDesc",{time:'<b>'+fmt(start)+'</b>'})+'</div>';
+  }
+}
+
 function renderHero(){
   if(!TIMES)return;
   const n=nowMins();
@@ -1016,7 +1884,7 @@ function renderPrayers(){
       (i===cur&&!t.prayers[i]?'<span class="badge">NOW</span>':'')+
       '<div class="tm">'+(TIMES?fmt(TIMES[en[i]]):"—")+'</div>';
     row.onclick=()=>{t.prayers[i]=t.prayers[i]?0:1;save();renderPrayers();renderStreak();renderWeek();
-      if(t.prayers.every(Boolean))toast("🔥 All 5 prayers done — streak alive!")};
+      if(t.prayers.every(Boolean))toast("🔥 "+t("today.allDoneToast"))};
     box.appendChild(row);
   });
   document.getElementById("prayerCount").textContent=t.prayers.filter(Boolean).length+" / 5";
@@ -1087,21 +1955,21 @@ function renderQuran(){
   const pct=Math.min(100,Math.round(S.khatmah/QURAN_PAGES*100));
   document.getElementById("khatmahPct").textContent=pct+"%";
   document.getElementById("khatmahFill").style.width=pct+"%";
-  document.getElementById("khatmahNote").textContent=S.khatmah+" / "+QURAN_PAGES+" pages"+(pct>=100?" — Khatmah complete! تقبّل الله 🎉":"");
+  document.getElementById("khatmahNote").textContent=S.khatmah+" / "+QURAN_PAGES+" "+t("quran.pagesUnit")+(pct>=100?" — "+t("reader.khatmahCompleteInline")+" تقبّل الله 🎉":"");
   const left=QURAN_PAGES-S.khatmah;
-  document.getElementById("khatmahEta").textContent=(left>0&&S.settings.quranGoal>0)?"~"+Math.ceil(left/S.settings.quranGoal)+" days left at your pace":"";
+  document.getElementById("khatmahEta").textContent=(left>0&&S.settings.quranGoal>0)?tf("quran.etaLine",{n:Math.ceil(left/S.settings.quranGoal)}):"";
 
   const btnReset = document.getElementById("khatmahReset");
   const btnContinue = document.getElementById("khatmahContinue");
 
   if (S.khatmah > 0 || S.reader.currentPage > 1) {
     btnContinue.style.display = "inline-block";
-    btnContinue.textContent = "Continue reading — Page " + S.reader.currentPage;
-    btnReset.textContent = "Start new khatmah";
+    btnContinue.textContent = tf("quran.continueReading",{n:S.reader.currentPage});
+    btnReset.textContent = t("quran.newKhatmah");
     btnReset.classList.remove("gold");
   } else {
     btnContinue.style.display = "none";
-    btnReset.textContent = "Start new khatmah";
+    btnReset.textContent = t("quran.newKhatmah");
     btnReset.classList.add("gold");
   }
 }
@@ -1187,7 +2055,7 @@ function renderSettings(){
   document.getElementById("locCoords").textContent=st.lat.toFixed(2)+"°N, "+st.lng.toFixed(2)+"°E · UTC+"+st.tz;
   const ns=document.getElementById("notifStatus");
   if(st.notif && "Notification" in window && Notification.permission === "denied") {
-    ns.textContent = "Notifications are blocked in your browser settings. You'll see in-app reminders instead.";
+    ns.textContent = t("set.notifBlocked");
   } else {
     ns.textContent = "";
   }
@@ -1206,6 +2074,22 @@ function bind(){
     tb.classList.add("active");
     document.getElementById("page-"+tb.dataset.p).classList.add("active");
   });
+  document.getElementById("dateline").onclick=openHijriCal;
+  document.getElementById("hzPerMinus").onclick=()=>{hzForm.per=Math.max(1,hzForm.per-1);renderHifzForm()};
+  document.getElementById("hzPerPlus").onclick=()=>{hzForm.per=Math.min(20,hzForm.per+1);renderHifzForm()};
+  document.getElementById("hzCreate").onclick=createHifzPlan;
+  document.getElementById("hzDelete").onclick=deleteHifzPlan;
+  document.getElementById("qrText").onclick=()=>{
+    const qr=document.getElementById("quran-reader");
+    if(qr.classList.contains("qr-testing"))document.getElementById("qrText").classList.toggle("revealed");
+  };
+  document.getElementById("wpClose").onclick=closeWirdPlus;
+  document.getElementById("plusEntrySettings").onclick=openWirdPlus;
+  document.getElementById("plusEntrySupport").onclick=openWirdPlus;
+  document.getElementById("hcClose").onclick=closeHijriCal;
+  document.getElementById("hcToday").onclick=()=>{hcCursor=new Date();renderHijriCal()};
+  document.getElementById("hcPrev").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),-1);renderHijriCal()};
+  document.getElementById("hcNext").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),1);renderHijriCal()};
   document.getElementById("tasbih").onclick=tapTasbih;
   document.getElementById("tReset").onclick=()=>{ui.seqIdx=0;ui.seqCount=0;renderTasbih()};
   document.getElementById("tSkip").onclick=()=>{ui.seqIdx=(ui.seqIdx+1)%TASBIH_SEQ.length;ui.seqCount=0;renderTasbih()};
@@ -1217,7 +2101,7 @@ function bind(){
     S.khatmah=Math.min(QURAN_PAGES,S.khatmah+1);
     S.reader.furthestPageCounted = Math.max(S.reader.furthestPageCounted, S.khatmah);
     save();renderQuran();
-    if(t.pages===S.settings.quranGoal)toast("📖 Daily Quran goal reached — ما شاء الله")
+    if(t.pages===S.settings.quranGoal)toast("📖 "+t("quran.goalReachedToast"))
   };
   
   document.getElementById("pgMinus").onclick=()=>{
@@ -1232,7 +2116,7 @@ function bind(){
 
   document.getElementById("khatmahReset").onclick=()=>{
     if(S.khatmah > 0 || S.reader.currentPage > 1) {
-      if(!confirm("This will reset your progress to 0/604. Continue?")) return;
+      if(!confirm(t("quran.resetConfirm"))) return;
     }
     S.khatmah=0;
     S.reader = {currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: Date.now()};
@@ -1296,7 +2180,7 @@ function bind(){
       const link = PAYMENT_LINKS[amt];
       if (link) {
         window.open(link, '_blank');
-        toast("Thank you for supporting Wird 💛 — جزاك الله خيرًا");
+        toast(t("support.thanksToast")+" — جزاك الله خيرًا");
       }
     };
   });
@@ -1305,7 +2189,7 @@ function bind(){
     if(v>0){
       if(PAYMENT_LINKS.custom && PAYMENT_LINKS.custom !== "PASTE_CUSTOM_LINK_HERE"){
         window.open(PAYMENT_LINKS.custom, '_blank');
-        toast("Thank you for supporting Wird 💛 — جزاك الله خيرًا");
+        toast(t("support.thanksToast")+" — جزاك الله خيرًا");
       }
       inp.value="";
     }
@@ -1317,18 +2201,18 @@ function bind(){
       try{await Notification.requestPermission()}catch(e){}
     }
     save();renderSettings();
-    toast(S.settings.notif?"🔔 Reminders on":"🔕 Reminders off");
+    toast(S.settings.notif?t("set.notifOnToast"):t("set.notifOffToast"));
   };
   document.getElementById("sw-notif-prayer").onclick=()=>{S.settings.notifPrayer=!S.settings.notifPrayer;save();renderSettings()};
   document.getElementById("sw-notif-adhkar").onclick=()=>{S.settings.notifAdhkar=!S.settings.notifAdhkar;save();renderSettings()};
   document.getElementById("useGPS").onclick=()=>{
-    if(!navigator.geolocation){toast("GPS not available here");return}
+    if(!navigator.geolocation){toast(t("set.gpsUnavailable"));return}
     navigator.geolocation.getCurrentPosition(pos=>{
       S.settings.lat=pos.coords.latitude;S.settings.lng=pos.coords.longitude;
       S.settings.tz=-new Date().getTimezoneOffset()/60;
       S.settings.locName="My location";
-      save();renderSettings();refreshTimes();toast("📍 Location updated");
-    },()=>toast("Couldn't get location — using "+S.settings.locName));
+      save();renderSettings();refreshTimes();toast(t("set.locationUpdated"));
+    },()=>toast(tf("set.locationFailed",{loc:S.settings.locName})));
   };
   document.getElementById("goalPlus").onclick=()=>{S.settings.quranGoal++;save();renderQuran()};
   document.getElementById("goalMinus").onclick=()=>{if(S.settings.quranGoal>1){S.settings.quranGoal--;save();renderQuran()}};
@@ -1346,7 +2230,7 @@ function bind(){
 
   btnConfirmReset.onclick = async () => {
     const ogText = btnConfirmReset.textContent;
-    btnConfirmReset.textContent = "Resetting…";
+    btnConfirmReset.textContent = t("set.resetting");
     btnConfirmReset.disabled = true;
     try {
       if (currentUser) {
@@ -1368,13 +2252,13 @@ function bind(){
         notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark'
       },reader:{currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: 0}};
       try{localStorage.removeItem("wird-data")}catch(e){}
-      toast("All data has been reset");
+      toast(t("set.resetDone"));
       setTimeout(() => {
         location.reload();
       }, 1500);
     } catch(e) {
       console.error("Reset failed", e);
-      toast("Failed to reset data. Please try again.");
+      toast(t("set.resetFailed"));
       btnConfirmReset.textContent = ogText;
       btnConfirmReset.disabled = false;
     }
@@ -1407,12 +2291,12 @@ function setupFirebase() {
     
     if (user) {
       if (user.isAnonymous) {
-        if(accName) accName.textContent = "Guest";
-        if(accEmail) accEmail.textContent = "Progress is saved locally. Sign in to sync across devices.";
+        if(accName) accName.textContent = t("account.guest");
+        if(accEmail) accEmail.textContent = t("account.guestSub");
         if(btnIn) btnIn.style.display = "block";
         if(btnOut) btnOut.style.display = "none";
       } else {
-        if(accName) accName.textContent = user.displayName || "Wird User";
+        if(accName) accName.textContent = user.displayName || t("account.defaultName");
         if(accEmail) accEmail.textContent = user.email;
         if(btnIn) btnIn.style.display = "none";
         if(btnOut) btnOut.style.display = "block";
@@ -1428,7 +2312,8 @@ function setupFirebase() {
           
           if (initialAuthFired) {
             renderDate();refreshTimes();
-            renderStreak();renderWeek();renderSwitches();
+            applyI18n();renderLangPicker();
+            renderStreak();renderWeek();renderSwitches();renderJumuah();
             renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
           }
         } else {
@@ -1443,7 +2328,7 @@ function setupFirebase() {
         authReadyResolver();
       }
     } else {
-      if(accName) accName.textContent = "Loading...";
+      if(accName) accName.textContent = t("account.loading");
       if(accEmail) accEmail.textContent = "";
       if(btnIn) btnIn.style.display = "none";
       if(btnOut) btnOut.style.display = "none";
@@ -1490,7 +2375,7 @@ function bindAuth() {
         await signInAnonymously(auth);
       } catch(e) {
         console.warn("Anonymous auth disabled or failed.", e.message);
-        toast("Offline mode active");
+        toast(t("auth.offline"));
       }
     };
   }
@@ -1509,13 +2394,13 @@ function bindAuth() {
         await signInAnonymously(auth);
       } catch(e) {
         console.warn("Anonymous auth failed.", e.message);
-        toast("Offline mode active");
+        toast(t("auth.offline"));
       }
     }
   };
   
   btnOut.onclick = async () => {
-    if(confirm("Sign out?")) {
+    if(confirm(t("auth.signOutConfirm"))) {
       await signOut(auth);
       S={days:{},khatmah:0,sadaqah:[],settings:S.settings,reader:{currentPage: 1, furthestPageCounted: 0, lastReadTimestamp: 0}};
       try{localStorage.setItem("wird-data",JSON.stringify(S))}catch(e){}
@@ -1537,10 +2422,10 @@ function bindAuth() {
           await signInWithPopup(auth, provider);
         }
       } else if (action === 'email_in') {
-        if(!emailInp.value || !pwdInp.value) throw new Error("Email and password required");
+        if(!emailInp.value || !pwdInp.value) throw new Error(t("auth.needCreds"));
         await signInWithEmailAndPassword(auth, emailInp.value, pwdInp.value);
       } else if (action === 'email_up') {
-        if(!emailInp.value || !pwdInp.value) throw new Error("Email and password required");
+        if(!emailInp.value || !pwdInp.value) throw new Error(t("auth.needCreds"));
         if (auth.currentUser && auth.currentUser.isAnonymous) {
            const cred = EmailAuthProvider.credential(emailInp.value, pwdInp.value);
            await linkWithCredential(auth.currentUser, cred);
@@ -1548,22 +2433,22 @@ function bindAuth() {
            await createUserWithEmailAndPassword(auth, emailInp.value, pwdInp.value);
         }
       } else if (action === 'reset') {
-        if(!emailInp.value) throw new Error("Email required to reset password");
+        if(!emailInp.value) throw new Error(t("auth.needEmail"));
         await sendPasswordResetEmail(auth, emailInp.value);
-        errDiv.textContent = "Password reset email sent!";
+        errDiv.textContent = t("auth.resetSent");
         errDiv.style.color = "var(--ok)";
         return;
       }
       overlay.style.display = 'none';
-      toast("Successfully signed in");
+      toast(t("auth.signedIn"));
     } catch(e) {
       errDiv.style.color = "#ff6b6b";
       let msg = e.message;
-      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) msg = "Incorrect email or password.";
-      else if (msg.includes('auth/email-already-in-use')) msg = "This email is already registered.";
-      else if (msg.includes('auth/weak-password')) msg = "Password should be at least 6 characters.";
-      else if (msg.includes('auth/invalid-email')) msg = "Please enter a valid email address.";
-      else if (msg.includes('auth/network-request-failed')) msg = "Network error. Please check your connection.";
+      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) msg = t("auth.errBadCreds");
+      else if (msg.includes('auth/email-already-in-use')) msg = t("auth.errInUse");
+      else if (msg.includes('auth/weak-password')) msg = t("auth.errWeak");
+      else if (msg.includes('auth/invalid-email')) msg = t("auth.errInvalidEmail");
+      else if (msg.includes('auth/network-request-failed')) msg = t("auth.errNetwork");
       else msg = msg.replace(/Firebase:\s*/, '').replace(/\(auth\/.*\)\.?/, '');
       errDiv.textContent = msg;
     }
@@ -1626,9 +2511,12 @@ let qlState = { reciter: null, surah: 1, repeat: false };
 window.setQuranTab = (tab) => {
   document.getElementById('qtab-read').classList.toggle('active', tab==='read');
   document.getElementById('qtab-listen').classList.toggle('active', tab==='listen');
+  document.getElementById('qtab-hifz').classList.toggle('active', tab==='hifz');
   document.getElementById('quran-read-view').style.display = tab==='read' ? 'block' : 'none';
   document.getElementById('quran-listen-view').style.display = tab==='listen' ? 'block' : 'none';
+  document.getElementById('quran-hifz-view').style.display = tab==='hifz' ? 'block' : 'none';
   if(tab==='listen') initListenTab();
+  if(tab==='hifz'){ renderHifzForm(); renderHifz(); }
 };
 
 async function initListenTab() {
@@ -1689,10 +2577,10 @@ window.showListenReciters = async () => {
   
   const listDiv = document.getElementById('ql-reciter-list');
   if(!qlReciters) {
-     listDiv.innerHTML = '<div class="loading">Loading reciters...</div>';
+     listDiv.innerHTML = '<div class="loading">'+t("quran.loadingReciters")+'</div>';
      const r = await fetchReciters();
      if(!r) {
-       listDiv.innerHTML = '<div class="loading">Failed to load reciters. Check internet.<br><br><button class="btn" onclick="showListenReciters()">Retry</button></div>';
+       listDiv.innerHTML = '<div class="loading">'+t("quran.failedReciters")+'<br><br><button class="btn" onclick="showListenReciters()">'+t("common.retry")+'</button></div>';
        return;
      }
   }
@@ -1897,16 +2785,17 @@ if ('mediaSession' in navigator) {
       return; // STOP execution
     } else {
       console.warn("Falling back to local data");
-      toast("Offline mode active");
+      toast(t("auth.offline"));
     }
   }
 
+  applyI18n();renderLangPicker();
   renderDate();refreshTimes();
-  renderStreak();renderWeek();renderSwitches();
+  renderStreak();renderWeek();renderSwitches();renderJumuah();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
   document.getElementById("loading").style.display="none";
   document.getElementById("main").style.display="block";
-  setInterval(()=>{renderHero();reminderTick()},20000); // live countdown + reminders
+  setInterval(()=>{renderHero();reminderTick();renderJumuahSaah()},20000); // live countdown + reminders
   setInterval(renderDate,60000);
   
   if ('serviceWorker' in navigator) {
