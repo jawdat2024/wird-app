@@ -718,12 +718,21 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
     <div class="greet" id="greet"></div>
   </div>
 
-  <div class="statsband">
+  <div class="statsband" style="display:none">
     <div class="streak">
       <div class="num" id="streakNum">0</div>
       <div class="lbl"><span data-i18n="today.streak">day streak</span><br><span data-i18n="today.all5">all 5 prayers</span> 🔥</div>
     </div>
     <div class="week" id="weekStrip" title="Last 7 days"></div>
+  </div>
+
+  <div class="card wp-entry" id="qiblaTodayCard">
+    <div class="wp-entry-mark qb-entry-mark">القبلة</div>
+    <div style="flex:1">
+      <div class="t" data-i18n="qibla.entryTitle">Qibla direction</div>
+      <div class="d" id="qiblaTodayBearing" data-i18n="qibla.entrySub">Direction to the Kaaba</div>
+    </div>
+    <div class="arrow">›</div>
   </div>
 
   <!-- TODAY -->
@@ -1007,14 +1016,6 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
         <button class="btn" id="useGPS" data-i18n="set.useGps">Use my GPS</button>
       </div>
       <div class="perm-note">Times computed on-device (Umm al-Qura method: Fajr 18.5°, Isha = Maghrib + 90 min). Always confirm with your local masjid.</div>
-    </div>
-    <div class="card wp-entry" id="qiblaEntry">
-      <div class="wp-entry-mark qb-entry-mark">۞</div>
-      <div style="flex:1">
-        <div class="t" data-i18n="qibla.entryTitle">Qibla direction</div>
-        <div class="d" data-i18n="qibla.entrySub">Direction to the Kaaba</div>
-      </div>
-      <div class="arrow">›</div>
     </div>
     <div class="card">
       <h2 data-i18n="set.prayerAdjust">Prayer time adjustment</h2>
@@ -1812,6 +1813,13 @@ function closeQibla(){
   document.getElementById("qibla-overlay").style.display="none";
 }
 
+function renderQiblaEntry(){
+  const el=document.getElementById("qiblaTodayBearing");
+  if(!el)return;
+  const bearing=qiblaBearing(S.settings.lat,S.settings.lng);
+  el.textContent = bearing===null ? tr("qibla.atKaaba") : trf("qibla.entryBearingPreview",{deg:Math.round(bearing)});
+}
+
 /* ================= i18n =================
    UI chrome only. Quranic text, adhkar, duas and dhikr are never
    translated — they stay in their authentic Arabic wherever they appear. */
@@ -1968,6 +1976,7 @@ const I18N={
   "auth.errNetwork":["Network error. Please check your connection.","خطأ في الشبكة. تحقق من اتصالك.","نیٹ ورک خرابی۔ اپنا کنکشن چیک کریں۔","May network error. Suriin ang koneksyon mo.","Error de red. Revisa tu conexión."],
   "qibla.entryTitle":["Qibla direction","اتجاه القبلة","قبلہ کی سمت","Direksyon ng Qibla","Dirección de la Qibla"],
   "qibla.entrySub":["Direction to the Kaaba","اتجاه الكعبة","کعبہ کی سمت","Direksyon papunta sa Kaaba","Dirección hacia la Kaaba"],
+  "qibla.entryBearingPreview":["{deg}° from North","{deg}° من الشمال","{deg}° شمال سے","{deg}° mula sa Hilaga","{deg}° desde el Norte"],
   "qibla.title":["Qibla","القبلة","قبلہ","Qibla","Qibla"],
   "qibla.sub":["Direction to the Kaaba","اتجاه الكعبة","کعبہ کی سمت","Direksyon papunta sa Kaaba","Dirección hacia la Kaaba"],
   "qibla.bearing":["Qibla: {deg}° from North","القبلة: {deg}° من الشمال","قبلہ: شمال سے {deg}°","Qibla: {deg}° mula sa Hilaga","Qibla: {deg}° desde el Norte"],
@@ -2512,7 +2521,7 @@ function bind(){
   document.getElementById("hcToday").onclick=()=>{hcCursor=new Date();renderHijriCal()};
   document.getElementById("hcPrev").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),-1);renderHijriCal()};
   document.getElementById("hcNext").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),1);renderHijriCal()};
-  document.getElementById("qiblaEntry").onclick=openQibla;
+  document.getElementById("qiblaTodayCard").onclick=openQibla;
   document.getElementById("qiblaClose").onclick=closeQibla;
   document.getElementById("tasbih").onclick=tapTasbih;
   document.getElementById("tReset").onclick=()=>{ui.seqIdx=0;ui.seqCount=0;renderTasbih()};
@@ -2636,7 +2645,7 @@ function bind(){
       S.settings.lat=pos.coords.latitude;S.settings.lng=pos.coords.longitude;
       S.settings.tz=-new Date().getTimezoneOffset()/60;
       S.settings.locName="My location";
-      save();renderSettings();refreshTimes();toast(tr("set.locationUpdated"));
+      save();renderSettings();renderQiblaEntry();refreshTimes();toast(tr("set.locationUpdated"));
     },()=>toast(trf("set.locationFailed",{loc:S.settings.locName})));
   };
   document.getElementById("goalPlus").onclick=()=>{S.settings.quranGoal++;save();renderQuran()};
@@ -2738,7 +2747,7 @@ function setupFirebase() {
           if (initialAuthFired) {
             renderDate();refreshTimes();
             applyI18n();renderLangPicker();
-            renderStreak();renderWeek();renderSwitches();renderJumuah();
+            renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderJumuah();
             renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
           }
         } else {
@@ -3272,7 +3281,7 @@ if ('mediaSession' in navigator) {
 
   applyI18n();renderLangPicker();
   renderDate();refreshTimes();
-  renderStreak();renderWeek();renderSwitches();renderJumuah();
+  renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderJumuah();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
   document.getElementById("loading").style.display="none";
   document.getElementById("main").style.display="block";
