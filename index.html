@@ -471,6 +471,17 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 }
 .hz-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); color: var(--brass-soft); }
 
+/* Athan max length */
+.am-label { font-size: 11px; letter-spacing: .14em; color: var(--mist); text-transform: uppercase; margin: 16px 0 8px; }
+.am-wrap { display: flex; gap: 8px; }
+.am-chip {
+  flex: 1; padding: 9px 6px; border-radius: 11px; cursor: pointer; text-align: center;
+  background: var(--deep); border: 1px solid var(--edge); color: var(--ivory); font-size: 13px;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.am-chip:hover { background: var(--edge); }
+.am-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); color: var(--brass-soft); font-weight: 600; }
+
 /* Per-prayer time adjustment */
 .po-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--edge); }
 .po-row:first-child { border-top: none; }
@@ -951,6 +962,8 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
     <div class="card" id="athan-voice-card">
       <h2 data-i18n="set.athanVoice">Athan voice</h2>
       <div id="athan-voice-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="am-label" data-i18n="set.athanLengthSub">Stop the athan automatically after</div>
+      <div class="am-wrap" id="athanLenPicker"></div>
     </div>
     <div class="card">
       <h2 data-i18n="set.location">Location &amp; prayer times</h2>
@@ -1094,7 +1107,7 @@ const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 /* ================= state ================= */
 let S={days:{},khatmah:0,sadaqah:[],settings:{
   lat:24.13,lng:55.80,tz:4,locName:"Al Ain, UAE",
-  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en',
+  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en',athanMaxLen:0,
   prayerOffsets:{...DEFAULT_PRAYER_OFFSETS}
 },reader:{currentPage:1,furthestPageCounted:0,lastReadTimestamp:0}};
 
@@ -1112,7 +1125,7 @@ async function load(){
     const val=localStorage.getItem("wird-data");
     if(val){
       const d=JSON.parse(val);
-      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',prayerOffsets:{...DEFAULT_PRAYER_OFFSETS},...S.settings,...(d.settings||{})}};
+      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',athanMaxLen:0,prayerOffsets:{...DEFAULT_PRAYER_OFFSETS},...S.settings,...(d.settings||{})}};
       if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
     }
   }catch(e){/* first run */}
@@ -1375,26 +1388,79 @@ document.addEventListener("pointerdown", unlockAudioOnce, {once:true});
 document.addEventListener("keydown", unlockAudioOnce, {once:true});
 
 let currentAthanAudio = null;
+let athanCapTimer = null;
+/* Which audio currently owns navigator.mediaSession. There is only one media
+   session per page and the Quran player claims it at load, so without this the
+   lock-screen pause button would call qAudio.pause() while the athan is the
+   thing actually making noise. */
+let mediaOwner = null;   // "athan" | "listen" | null
+
+/* Scope, honestly:
+   - Volume keys change volume by OS design and cannot be intercepted by a web
+     app. What this buys is the standard media controls — lock screen, control
+     centre, headphone/hardware pause — being able to STOP the athan without
+     opening Wird.
+   - The athan is started by a client-side timer, so it only plays while the
+     page is alive. iOS throttles and eventually freezes backgrounded pages, so
+     it may not fire at all in that state.
+   - When the app is fully closed the FCM push still shows a notification, but
+     it cannot play the athan: service workers have no audio output. There is no
+     way to sound the athan from a closed app on the web platform today.
+   - Media Session on a detached `new Audio()` element is widely supported but
+     not guaranteed on every browser; the in-app Stop button remains the
+     guaranteed path. */
+function athanMaxLen(){
+  const v = Number(S.settings && S.settings.athanMaxLen);
+  return ATHAN_MAX_OPTIONS.some(o => o.v === v) ? v : 0;
+}
+
 window.stopAthan = () => {
+  if (athanCapTimer !== null) { clearTimeout(athanCapTimer); athanCapTimer = null; }
   if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
   document.getElementById("toast").classList.remove("show");
+  if (mediaOwner === "athan") {
+    mediaOwner = null;
+    if ('mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = "none"; } catch(e){}
+    }
+  }
 };
 
 function playPrayerAthan(msg) {
   if (currentAthanAudio) { currentAthanAudio.pause(); currentAthanAudio = null; }
+  if (athanCapTimer !== null) { clearTimeout(athanCapTimer); athanCapTimer = null; }
+  /* The athan takes precedence over recitation — otherwise both play at once. */
+  try { if (typeof qAudio !== "undefined" && qAudio && !qAudio.paused) qAudio.pause(); } catch(e){}
+
   const v = S.settings.athanVoice || "makkah";
   let voice = ATHAN_VOICES.find(x => x.id === v);
   if (!voice) voice = ATHAN_VOICES[ATHAN_VOICES.length-1];
-  
+
   currentAthanAudio = new Audio(voice.file);
   currentAthanAudio.play().catch(e => {
     console.warn("Athan playback failed for "+v+":", e.name, e.message);
     if(v !== 'tone') {
        currentAthanAudio = new Audio(ATHAN_VOICES[ATHAN_VOICES.length-1].file);
+       currentAthanAudio.onended = stopAthan;
        currentAthanAudio.play().catch(err=>console.warn("Fallback tone also failed:", err.name, err.message));
     }
   });
-  
+
+  mediaOwner = "athan";
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: voice.ar,
+        artist: "وِرد",
+        album: "Wird"
+      });
+      navigator.mediaSession.playbackState = "playing";
+    } catch(e){}
+  }
+
+  const cap = athanMaxLen();
+  if (cap > 0) athanCapTimer = setTimeout(stopAthan, cap * 1000);
+
   const t = document.getElementById("toast");
   t.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
@@ -1404,7 +1470,7 @@ function playPrayerAthan(msg) {
   `;
   t.classList.add("show");
   clearTimeout(toastTimer);
-  
+
   currentAthanAudio.onended = stopAthan;
 }
 
@@ -1628,6 +1694,11 @@ const I18N={
   "set.atEach":     ["At each prayer time","عند كل وقت صلاة","ہر نماز کے وقت","Sa bawat oras ng dasal","En cada oración"],
   "set.adhkarRem":  ["Adhkar reminders","تذكير الأذكار","اذکار کی یاد دہانی","Paalala ng adhkar","Recordatorios de adhkar"],
   "set.athanVoice": ["Athan voice","صوت الأذان","اذان کی آواز","Boses ng athan","Voz del adhan"],
+  "set.athanLength":["Athan length","مدة الأذان","اذان کا دورانیہ","Haba ng athan","Duración del adhan"],
+  "set.athanLengthSub":["Stop the athan automatically after","إيقاف الأذان تلقائياً بعد","اذان خودکار طور پر بند کریں","Awtomatikong ihinto ang athan pagkatapos ng","Detener el adhan automáticamente tras"],
+  "set.athanLenFull":["Full","كامل","مکمل","Buo","Completo"],
+  "set.athanLen30":["30s","٣٠ ث","30s","30s","30s"],
+  "set.athanLen60":["60s","٦٠ ث","60s","60s","60s"],
   "set.prayerAdjust":["Prayer time adjustment","تعديل أوقات الصلاة","نماز کے اوقات کی تنظیم","Pag-aayos ng oras ng dasal","Ajuste de horarios"],
   "set.prayerAdjustSub":["Fine-tune each prayer to match your local masjid","اضبط كل صلاة لتوافق مسجدك المحلي","ہر نماز کو اپنی مقامی مسجد کے مطابق کریں","I-tugma ang bawat dasal sa lokal na masjid","Ajusta cada oración a tu mezquita local"],
   "set.athanPreviewFailed":["Couldn't play this voice — check your device volume and try again","تعذّر تشغيل هذا الصوت — تحقق من مستوى الصوت وحاول مجدداً","یہ آواز چلائی نہیں جا سکی — والیوم چیک کریں اور دوبارہ کوشش کریں","Hindi na-play ang tinig na ito — suriin ang volume at subukan muli","No se pudo reproducir esta voz — revisa el volumen e inténtalo de nuevo"],
@@ -2090,6 +2161,13 @@ function renderSadaqah(){
     if(customContainer) customContainer.style.display = "flex";
   }
 }
+/* How long the athan is allowed to play before Wird stops it on its own.
+   0 means play the recording through to its end. */
+const ATHAN_MAX_OPTIONS = [
+  {v:0,  key:"set.athanLenFull"},
+  {v:30, key:"set.athanLen30"},
+  {v:60, key:"set.athanLen60"}
+];
 const ATHAN_VOICES = [
   {id:"makkah",     name:"Makkah Haram",        ar:"أذان الحرم المكي",   file:"/public/assets/athan/makkah.mp3?v=2"},
   {id:"madinah",    name:"Madinah Haram",       ar:"أذان الحرم المدني",  file:"/public/assets/athan/madinah.mp3?v=2"},
@@ -2101,6 +2179,19 @@ const ATHAN_VOICES = [
   {id:"tone",       name:"Simple tone",         ar:"تنبيه بسيط",         file:"/public/assets/athan/tone.mp3?v=2"},
 ];
 let currentAthanPreview = null;
+
+function renderAthanLength(){
+  const box=document.getElementById("athanLenPicker");
+  if(!box)return;
+  const cur=athanMaxLen();
+  box.innerHTML=ATHAN_MAX_OPTIONS.map(o=>
+    '<div class="am-chip'+(o.v===cur?" sel":"")+'" data-amlen="'+o.v+'">'+tr(o.key)+'</div>').join("");
+  box.querySelectorAll(".am-chip").forEach(c=>c.onclick=()=>{
+    S.settings.athanMaxLen=Number(c.dataset.amlen);
+    save();
+    renderAthanLength();
+  });
+}
 
 function renderPrayerOffsets(){
   const box=document.getElementById("offsetList");
@@ -2190,6 +2281,7 @@ function renderSettings(){
     ns.textContent = "";
   }
   renderAthanVoices();
+  renderAthanLength();
   renderPrayerOffsets();
 }
 function refreshTimes(){
@@ -2852,6 +2944,7 @@ function playListenAudio(startAt) {
   qAudio.play().catch(e => console.log("Auto-play prevented", e));
   
   // Media session metadata
+  mediaOwner = "listen";
   if ('mediaSession' in navigator) {
     const sData = SURAHS[qlState.surah - 1];
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -2931,11 +3024,21 @@ document.getElementById('ql-next').addEventListener('click', playListenNext);
 document.getElementById('ql-prev').addEventListener('click', playListenPrev);
 document.getElementById('ql-repeat').addEventListener('change', e => { qlState.repeat = e.target.checked; });
 
+/* One media session is shared by the athan and the Quran player, so every
+   handler dispatches on whichever currently owns it. Without this the
+   lock-screen controls would always talk to qAudio, and pausing during the
+   athan would silence nothing. */
 if ('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('play', () => qAudio.play());
-  navigator.mediaSession.setActionHandler('pause', () => qAudio.pause());
-  navigator.mediaSession.setActionHandler('previoustrack', playListenPrev);
-  navigator.mediaSession.setActionHandler('nexttrack', playListenNext);
+  const setHandler = (action, fn) => {
+    try { navigator.mediaSession.setActionHandler(action, fn); } catch(e){}
+  };
+  setHandler('play',  () => { if (mediaOwner !== 'athan') qAudio.play(); });
+  setHandler('pause', () => { if (mediaOwner === 'athan') stopAthan(); else qAudio.pause(); });
+  setHandler('stop',  () => { if (mediaOwner === 'athan') stopAthan(); else qAudio.pause(); });
+  /* Skipping to "the next athan" is meaningless, so these stay inert while the
+     athan owns the session. */
+  setHandler('previoustrack', () => { if (mediaOwner !== 'athan') playListenPrev(); });
+  setHandler('nexttrack',     () => { if (mediaOwner !== 'athan') playListenNext(); });
 }
 // --- END FEATURE 2 ---
 
