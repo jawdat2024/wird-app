@@ -326,6 +326,29 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 }
 .hc-disclaimer .ar { font-family: 'Amiri', serif; font-size: 14px; color: var(--mist); display: block; margin-top: 5px; }
 
+/* Qibla compass */
+.qb-entry-mark { font-size: 30px; }
+.qb-body { flex: 1; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.qb-status { font-size: 13px; color: var(--mist); text-align: center; }
+.qb-dial-wrap { position: relative; width: 240px; height: 240px; max-width: 80vw; max-height: 80vw; margin: 8px auto; }
+.qb-dial-wrap svg { width: 100%; height: 100%; }
+.qb-dial-ring { fill: var(--deep); stroke: var(--edge); stroke-width: 1.5; }
+.qb-dial-tick { stroke: var(--mist); stroke-width: 1; }
+.qb-dial-label { font-family: 'Amiri', serif; font-size: 13px; fill: var(--mist); text-anchor: middle; }
+.qb-needle-group { transform-origin: 120px 120px; transition: transform .25s ease-out; }
+.qb-needle { fill: var(--brass); }
+.qb-kaaba-mark { font-size: 20px; text-anchor: middle; }
+.qb-center-dot { fill: var(--brass-soft); }
+.qb-bearing { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 20px; color: var(--ivory); text-align: center; }
+.qb-note { font-size: 12px; color: var(--mist); line-height: 1.6; text-align: center; max-width: 320px; }
+.qb-disclaimer {
+  margin-top: 4px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(198,161,91,.07); border: 1px solid var(--edge);
+  font-size: 12px; color: var(--mist); line-height: 1.6; text-align: center; max-width: 340px;
+}
+.qb-static-diagram { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.qb-static-arrow { font-size: 44px; color: var(--brass); display: inline-block; }
+
 /* Jumu'ah (Friday) card */
 .jm-card { border-color: rgba(198,161,91,.42); background: linear-gradient(180deg, rgba(198,161,91,.09), transparent 60%), var(--card); }
 .jm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
@@ -634,6 +657,18 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
       <span class="ar">التواريخ الهجرية بحسب تقويم أم القرى، وقد تختلف يوماً حسب رؤية الهلال محلياً.</span>
     </div>
   </div>
+</div>
+
+<div id="qibla-overlay" class="qr-overlay" style="display:none">
+  <div class="qr-top">
+    <button class="qr-close" id="qiblaClose">✕</button>
+    <div class="qr-meta">
+      <div class="qr-title" data-i18n="qibla.title">القبلة</div>
+      <div class="qr-sub" data-i18n="qibla.sub">DIRECTION TO THE KAABA</div>
+    </div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="qb-body" id="qiblaBody"></div>
 </div>
 
 <div id="wird-plus" class="qr-overlay" style="display:none">
@@ -973,6 +1008,14 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
       </div>
       <div class="perm-note">Times computed on-device (Umm al-Qura method: Fajr 18.5°, Isha = Maghrib + 90 min). Always confirm with your local masjid.</div>
     </div>
+    <div class="card wp-entry" id="qiblaEntry">
+      <div class="wp-entry-mark qb-entry-mark">۞</div>
+      <div style="flex:1">
+        <div class="t" data-i18n="qibla.entryTitle">Qibla direction</div>
+        <div class="d" data-i18n="qibla.entrySub">Direction to the Kaaba</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
     <div class="card">
       <h2 data-i18n="set.prayerAdjust">Prayer time adjustment</h2>
       <div class="small-note" data-i18n="set.prayerAdjustSub" style="margin-bottom:12px">Fine-tune each prayer to match your local masjid</div>
@@ -1081,6 +1124,8 @@ const PRAYER_ORDER=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
    constant can correct it. Users adjust any of these in Settings. */
 const DEFAULT_PRAYER_OFFSETS={Fajr:2,Dhuhr:0,Asr:0,Maghrib:3,Isha:0};
 const PRAYER_OFFSET_LIMIT=15;
+/* Kaaba, for the qibla bearing. */
+const KAABA_LAT=21.4225, KAABA_LNG=39.8262;
 const TASBIH_SEQ=[
   {ar:"سُبْحَانَ الله",en:"SubhanAllah — Glory be to Allah",n:33},
   {ar:"الْحَمْدُ لِله",en:"Alhamdulillah — Praise be to Allah",n:33},
@@ -1194,6 +1239,19 @@ function prayerOffsets(){
 /* Every consumer of prayer times goes through here, so the user's calibration
    reaches the list, the hero countdown, the notifications and the athan
    trigger from one place. */
+/* Initial great-circle bearing from a point to the Kaaba, in degrees clockwise
+   from true north. This is the standard qibla calculation: the shortest path
+   over the sphere, which is why it can point somewhere a flat map would not
+   suggest. Returns null when the point is essentially at the Kaaba, where a
+   direction has no meaning. */
+function qiblaBearing(lat,lng){
+  if(typeof lat!=="number"||typeof lng!=="number"||isNaN(lat)||isNaN(lng))return null;
+  if(Math.abs(lat-KAABA_LAT)<0.0005&&Math.abs(lng-KAABA_LNG)<0.0005)return null;
+  const p1=rad(lat),p2=rad(KAABA_LAT),dl=rad(KAABA_LNG-lng);
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return (deg(Math.atan2(y,x))+360)%360;
+}
 function computeTimesAdjusted(date,lat,lng,tz){
   const t=computeTimes(date,lat,lng,tz),o=prayerOffsets();
   PRAYER_ORDER.forEach(p=>{if(typeof t[p]==="number")t[p]+=o[p]});
@@ -1625,6 +1683,135 @@ function renderHijriCal(){
 function openHijriCal(){hcCursor=new Date();renderHijriCal();document.getElementById("hijri-cal").style.display="flex"}
 function closeHijriCal(){document.getElementById("hijri-cal").style.display="none"}
 
+/* ================= Qibla direction =================
+   Static bearing is always computable offline from stored lat/lng. A live
+   rotating compass is offered only once a real, verified heading source is
+   found — it never spins from unreliable or absent sensor data. */
+let qbHeadingHandler=null;
+let qbHeadingSource=null;   // "ios" | "absolute" | null
+let qbWatchdog=null;
+let qbHeading=null;
+
+function qbDialSvg(bearing,heading){
+  const rot = heading!==null ? (bearing - heading) : 0;
+  return '<div class="qb-dial-wrap"><svg viewBox="0 0 240 240">'
+    +'<circle class="qb-dial-ring" cx="120" cy="120" r="112"/>'
+    +[0,45,90,135,180,225,270,315].map(a=>{
+        const r1=98,r2=112,rr=rad(a-90);
+        const x1=120+r1*Math.cos(rr),y1=120+r1*Math.sin(rr);
+        const x2=120+r2*Math.cos(rr),y2=120+r2*Math.sin(rr);
+        return '<line class="qb-dial-tick" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';
+      }).join('')
+    +'<text class="qb-dial-label" x="120" y="24">N</text>'
+    +'<text class="qb-dial-label" x="216" y="125">E</text>'
+    +'<text class="qb-dial-label" x="120" y="222">S</text>'
+    +'<text class="qb-dial-label" x="24" y="125">W</text>'
+    +'<g class="qb-needle-group" style="transform:rotate('+rot+'deg)">'
+      +'<polygon class="qb-needle" points="120,28 112,120 128,120"/>'
+      +'<text class="qb-kaaba-mark" x="120" y="46">۞</text>'
+    +'</g>'
+    +'<circle class="qb-center-dot" cx="120" cy="120" r="4"/>'
+    +'</svg></div>';
+}
+
+function qbStaticArrow(bearing){
+  return '<div class="qb-static-diagram"><span class="qb-static-arrow" style="display:inline-block;transform:rotate('+bearing+'deg)">↑</span></div>';
+}
+
+function renderQibla(){
+  const body=document.getElementById("qiblaBody");
+  const lat=S.settings.lat, lng=S.settings.lng;
+  const bearing=qiblaBearing(lat,lng);
+  if(bearing===null){
+    body.innerHTML='<div class="qb-status">'+tr("qibla.atKaaba")+'</div>';
+    return;
+  }
+  const deg2=Math.round(bearing);
+  let html='';
+  if(qbHeading!==null){
+    html+=qbDialSvg(bearing,qbHeading);
+  } else {
+    html+=qbStaticArrow(bearing);
+  }
+  html+='<div class="qb-bearing">'+trf("qibla.bearing",{deg:deg2})+'</div>';
+  if(qbHeading===null){
+    html+='<button class="btn gold" id="qbEnableBtn" data-i18n="qibla.enableCompass">'+tr("qibla.enableCompass")+'</button>';
+    html+='<div class="qb-note" id="qbUnavailNote"></div>';
+  }
+  html+='<div class="qb-disclaimer">'+tr("qibla.disclaimer");
+  if(qbHeading!==null) html+='<br>'+tr("qibla.magneticNote");
+  html+='</div>';
+  body.innerHTML=html;
+  if(qbHeading===null){
+    const btn=document.getElementById("qbEnableBtn");
+    if(btn) btn.onclick=qbRequestCompass;
+  }
+}
+
+function qbSetUnavailNote(key){
+  const n=document.getElementById("qbUnavailNote");
+  if(n) n.textContent=tr(key);
+}
+
+function qbOnOrientation(e){
+  let heading=null, source=null;
+  if(typeof e.webkitCompassHeading==="number"&&!isNaN(e.webkitCompassHeading)){
+    heading=e.webkitCompassHeading; source="ios";
+  } else if(e.absolute===true&&typeof e.alpha==="number"){
+    heading=(360-e.alpha)%360; source="absolute";
+  }
+  if(heading===null) return;
+  qbHeadingSource=source;
+  qbHeading=heading;
+  if(qbWatchdog!==null){clearTimeout(qbWatchdog);qbWatchdog=null}
+  renderQibla();
+}
+
+function qbStartListening(){
+  const evName = "ondeviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation";
+  qbHeadingHandler=qbOnOrientation;
+  window.addEventListener(evName,qbHeadingHandler,true);
+  qbWatchdog=setTimeout(()=>{
+    if(qbHeading===null){
+      qbStopListening();
+      qbSetUnavailNote("qibla.compassUnavailable");
+    }
+  },2500);
+}
+
+function qbStopListening(){
+  if(qbHeadingHandler){
+    window.removeEventListener("deviceorientationabsolute",qbHeadingHandler,true);
+    window.removeEventListener("deviceorientation",qbHeadingHandler,true);
+    qbHeadingHandler=null;
+  }
+  if(qbWatchdog!==null){clearTimeout(qbWatchdog);qbWatchdog=null}
+}
+
+function qbRequestCompass(){
+  if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
+    DeviceOrientationEvent.requestPermission().then(state=>{
+      if(state==="granted"){qbStartListening()}
+      else{qbSetUnavailNote("qibla.compassDenied")}
+    }).catch(()=>qbSetUnavailNote("qibla.compassDenied"));
+  } else if(typeof DeviceOrientationEvent!=="undefined"){
+    qbStartListening();
+  } else {
+    qbSetUnavailNote("qibla.compassUnavailable");
+  }
+}
+
+function openQibla(){
+  qbHeading=null; qbHeadingSource=null;
+  renderQibla();
+  document.getElementById("qibla-overlay").style.display="flex";
+}
+function closeQibla(){
+  qbStopListening();
+  qbHeading=null; qbHeadingSource=null;
+  document.getElementById("qibla-overlay").style.display="none";
+}
+
 /* ================= i18n =================
    UI chrome only. Quranic text, adhkar, duas and dhikr are never
    translated — they stay in their authentic Arabic wherever they appear. */
@@ -1778,7 +1965,19 @@ const I18N={
   "auth.errInUse":  ["This email is already registered.","هذا البريد الإلكتروني مسجّل مسبقاً.","یہ ای میل پہلے سے رجسٹرڈ ہے۔","Rehistrado na ang email na ito.","Este correo ya está registrado."],
   "auth.errWeak":   ["Password should be at least 6 characters.","يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.","پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔","Dapat hindi bababa sa 6 na character ang password.","La contraseña debe tener al menos 6 caracteres."],
   "auth.errInvalidEmail":["Please enter a valid email address.","الرجاء إدخال بريد إلكتروني صحيح.","براہ کرم درست ای میل ایڈریس درج کریں۔","Maglagay ng wastong email address.","Ingresa una dirección de correo válida."],
-  "auth.errNetwork":["Network error. Please check your connection.","خطأ في الشبكة. تحقق من اتصالك.","نیٹ ورک خرابی۔ اپنا کنکشن چیک کریں۔","May network error. Suriin ang koneksyon mo.","Error de red. Revisa tu conexión."]
+  "auth.errNetwork":["Network error. Please check your connection.","خطأ في الشبكة. تحقق من اتصالك.","نیٹ ورک خرابی۔ اپنا کنکشن چیک کریں۔","May network error. Suriin ang koneksyon mo.","Error de red. Revisa tu conexión."],
+  "qibla.entryTitle":["Qibla direction","اتجاه القبلة","قبلہ کی سمت","Direksyon ng Qibla","Dirección de la Qibla"],
+  "qibla.entrySub":["Direction to the Kaaba","اتجاه الكعبة","کعبہ کی سمت","Direksyon papunta sa Kaaba","Dirección hacia la Kaaba"],
+  "qibla.title":["Qibla","القبلة","قبلہ","Qibla","Qibla"],
+  "qibla.sub":["Direction to the Kaaba","اتجاه الكعبة","کعبہ کی سمت","Direksyon papunta sa Kaaba","Dirección hacia la Kaaba"],
+  "qibla.bearing":["Qibla: {deg}° from North","القبلة: {deg}° من الشمال","قبلہ: شمال سے {deg}°","Qibla: {deg}° mula sa Hilaga","Qibla: {deg}° desde el Norte"],
+  "qibla.enableCompass":["Enable compass","تفعيل البوصلة","قطب نما فعال کریں","I-enable ang compass","Activar brújula"],
+  "qibla.compassUnavailable":["Live compass unavailable on this device — use the angle above with a physical compass.","البوصلة الحية غير متاحة على هذا الجهاز — استخدم الزاوية أعلاه مع بوصلة حقيقية.","اس آلے پر لائیو قطب نما دستیاب نہیں — اوپر دی گئی زاویہ ایک حقیقی قطب نما کے ساتھ استعمال کریں۔","Hindi available ang live compass sa device na ito — gamitin ang anggulo sa itaas kasama ng tunay na compass.","La brújula en vivo no está disponible en este dispositivo — usa el ángulo de arriba con una brújula física."],
+  "qibla.compassDenied":["Compass access was denied. You can still use the angle above with a physical compass.","تم رفض الوصول إلى البوصلة. لا يزال بإمكانك استخدام الزاوية أعلاه مع بوصلة حقيقية.","قطب نما تک رسائی سے انکار کر دیا گیا۔ آپ اب بھی اوپر دی گئی زاویہ ایک حقیقی قطب نما کے ساتھ استعمال کر سکتے ہیں۔","Tinanggihan ang access sa compass. Magagamit mo pa rin ang anggulo sa itaas kasama ng tunay na compass.","Se denegó el acceso a la brújula. Aún puedes usar el ángulo de arriba con una brújula física."],
+  "qibla.disclaimer":["For precise direction, confirm with a reliable compass or your local masjid.","للحصول على اتجاه دقيق، تأكد باستخدام بوصلة موثوقة أو مسجدك المحلي.","درست سمت کے لیے، ایک قابل اعتماد قطب نما یا اپنی مقامی مسجد سے تصدیق کریں۔","Para sa tumpak na direksyon, kumpirmahin gamit ang maaasahang compass o sa lokal mong masjid.","Para una dirección precisa, confírmala con una brújula fiable o tu mezquita local."],
+  "qibla.magneticNote":["The live compass points to magnetic north, which differs slightly from true north depending on your location.","تشير البوصلة الحية إلى الشمال المغناطيسي، الذي يختلف قليلاً عن الشمال الحقيقي حسب موقعك.","لائیو قطب نما مقناطیسی شمال کی طرف اشارہ کرتا ہے، جو آپ کے مقام کے لحاظ سے حقیقی شمال سے قدرے مختلف ہوتا ہے۔","Ang live compass ay nakaturo sa magnetic north, na bahagyang naiiba sa true north depende sa lokasyon mo.","La brújula en vivo apunta al norte magnético, que difiere ligeramente del norte verdadero según tu ubicación."],
+  "qibla.locating":["Checking your location…","جارٍ التحقق من موقعك…","آپ کا مقام چیک ہو رہا ہے…","Chine-check ang lokasyon mo…","Comprobando tu ubicación…"],
+  "qibla.atKaaba":["You're already at the Kaaba.","أنت بالفعل عند الكعبة.","آپ پہلے ہی کعبہ پر موجود ہیں۔","Nasa Kaaba ka na.","Ya te encuentras en la Kaaba."]
 };
 function langIndex(){
   const id=(S.settings&&S.settings.lang)||"en";
@@ -2313,6 +2512,8 @@ function bind(){
   document.getElementById("hcToday").onclick=()=>{hcCursor=new Date();renderHijriCal()};
   document.getElementById("hcPrev").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),-1);renderHijriCal()};
   document.getElementById("hcNext").onclick=()=>{hcCursor=hijriShiftMonth(hcCursor||new Date(),1);renderHijriCal()};
+  document.getElementById("qiblaEntry").onclick=openQibla;
+  document.getElementById("qiblaClose").onclick=closeQibla;
   document.getElementById("tasbih").onclick=tapTasbih;
   document.getElementById("tReset").onclick=()=>{ui.seqIdx=0;ui.seqCount=0;renderTasbih()};
   document.getElementById("tSkip").onclick=()=>{ui.seqIdx=(ui.seqIdx+1)%TASBIH_SEQ.length;ui.seqCount=0;renderTasbih()};
