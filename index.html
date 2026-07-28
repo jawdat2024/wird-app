@@ -2803,10 +2803,11 @@ window.selectListenSurah = (sNum) => {
   S.listener.moshafId = qlState.reciter.moshaf[0].id;
   S.listener.server = qlState.reciter.moshaf[0].server;
   S.listener.surah = sNum;
+  S.listener.time = 0;   // picking a surah from the list always starts it over
   save();
-  
+
   showListenPlayer();
-  playListenAudio();
+  playListenAudio(0);
 };
 
 function showListenPlayer() {
@@ -2828,16 +2829,25 @@ function fmtTime(sec) {
   return m + ":" + (s<10?'0':'') + s;
 }
 
-function playListenAudio() {
+/* startAt is passed in explicitly rather than inferred here. The caller knows
+   whether this is a fresh selection (always 0) or a genuine resume; deciding
+   it inside this function meant comparing S.listener.surah against
+   qlState.surah after both had already been set to the new surah, so the
+   check always passed and a new surah inherited the previous one's position. */
+function playListenAudio(startAt) {
   const surahStr = String(qlState.surah).padStart(3, '0');
   let srv = qlState.reciter.moshaf[0].server;
   if (!srv.endsWith('/')) srv += '/';
-  
+
+  const seekTo = Number(startAt) > 0 ? Number(startAt) : 0;
   qAudio.src = srv + surahStr + '.mp3';
-  if (S.listener && S.listener.time && S.listener.surah === qlState.surah) {
-    qAudio.currentTime = S.listener.time;
-  } else if (S.listener) {
-    S.listener.time = 0;
+  /* Seek only once the duration is known — assigning currentTime straight
+     after src, before loadedmetadata, is unreliable and can be ignored. */
+  if (seekTo > 0) {
+    qAudio.addEventListener('loadedmetadata', function seekOnce() {
+      qAudio.removeEventListener('loadedmetadata', seekOnce);
+      if (!isNaN(qAudio.duration) && seekTo < qAudio.duration) qAudio.currentTime = seekTo;
+    });
   }
   qAudio.play().catch(e => console.log("Auto-play prevented", e));
   
@@ -2896,7 +2906,12 @@ document.getElementById('ql-seek').addEventListener('input', e => {
 
 document.getElementById('ql-play').addEventListener('click', () => {
   if(qAudio.paused) {
-     if(!qAudio.getAttribute('src')) playListenAudio();
+     if(!qAudio.getAttribute('src')) {
+        /* No audio loaded means initListenTab() restored a previous session
+           without loading it — the one case where resuming is correct. */
+        const saved = (S.listener && S.listener.surah === qlState.surah) ? S.listener.time : 0;
+        playListenAudio(saved);
+     }
      else qAudio.play();
   } else qAudio.pause();
 });
