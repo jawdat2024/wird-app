@@ -471,6 +471,23 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 }
 .hz-chip.sel { background: rgba(198,161,91,.16); border-color: var(--brass); color: var(--brass-soft); }
 
+/* Per-prayer time adjustment */
+.po-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--edge); }
+.po-row:first-child { border-top: none; }
+.po-name { flex: 1; min-width: 0; }
+.po-name .ar { font-family: 'Amiri', serif; font-size: 17px; color: var(--ivory); }
+.po-name .tm { font-size: 12px; color: var(--mist); margin-top: 1px; }
+.po-ctl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.po-btn {
+  width: 32px; height: 32px; border-radius: 16px; cursor: pointer;
+  background: var(--deep); border: 1px solid var(--edge); color: var(--brass-soft);
+  font-size: 17px; line-height: 1; display: flex; align-items: center; justify-content: center;
+  padding: 0; font-family: 'Manrope', sans-serif;
+}
+.po-btn:hover { background: var(--edge); }
+.po-val { min-width: 44px; text-align: center; font-size: 14px; font-weight: 600; color: var(--ivory); }
+.po-val.zero { color: var(--mist); font-weight: 400; }
+
 /* Language picker */
 .lang-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .lang-chip {
@@ -944,6 +961,11 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
       <div class="perm-note">Times computed on-device (Umm al-Qura method: Fajr 18.5°, Isha = Maghrib + 90 min). Always confirm with your local masjid.</div>
     </div>
     <div class="card">
+      <h2 data-i18n="set.prayerAdjust">Prayer time adjustment</h2>
+      <div class="small-note" data-i18n="set.prayerAdjustSub" style="margin-bottom:12px">Fine-tune each prayer to match your local masjid</div>
+      <div id="offsetList"></div>
+    </div>
+    <div class="card">
       <h2 data-i18n="set.quranGoal">Quran goal</h2>
       <div class="pages-ctl">
         <button class="btn round" id="goalMinus">−</button>
@@ -1033,6 +1055,19 @@ let app, auth, db;
 
 /* ================= data ================= */
 const PRAYERS=[["فجر","Fajr"],["ظهر","Dhuhr"],["عصر","Asr"],["مغرب","Maghrib"],["عشاء","Isha"]];
+/* The single source of truth for prayer names in Arabic. These are complete,
+   correct words — never build them by prepending "ال" to a stem, which is
+   what produced "الالفجر" in notification bodies. */
+const PRAYER_NAMES_AR={Fajr:"الفجر",Dhuhr:"الظهر",Asr:"العصر",Maghrib:"المغرب",Isha:"العشاء"};
+const PRAYER_ORDER=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
+/* Per-prayer calibration in minutes. Defaults nudge the computed times toward
+   the published Abu Dhabi Awqaf timetable: Fajr and Maghrib sit a couple of
+   minutes early against it, while Dhuhr and Asr already match. Isha stays at 0
+   deliberately — the gap there swings ~1.5-14.5 min across the year because
+   Awqaf's Isha is angle-based while this app uses Maghrib+90, so no single
+   constant can correct it. Users adjust any of these in Settings. */
+const DEFAULT_PRAYER_OFFSETS={Fajr:2,Dhuhr:0,Asr:0,Maghrib:3,Isha:0};
+const PRAYER_OFFSET_LIMIT=15;
 const TASBIH_SEQ=[
   {ar:"سُبْحَانَ الله",en:"SubhanAllah — Glory be to Allah",n:33},
   {ar:"الْحَمْدُ لِله",en:"Alhamdulillah — Praise be to Allah",n:33},
@@ -1059,12 +1094,14 @@ const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 /* ================= state ================= */
 let S={days:{},khatmah:0,sadaqah:[],settings:{
   lat:24.13,lng:55.80,tz:4,locName:"Al Ain, UAE",
-  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en'
+  notif:false,notifPrayer:true,notifAdhkar:true,quranGoal:2,quranFontSize:'M',quranTheme:'dark',lang:'en',
+  prayerOffsets:{...DEFAULT_PRAYER_OFFSETS}
 },reader:{currentPage:1,furthestPageCounted:0,lastReadTimestamp:0}};
 
 let ui={session:"morning",seqIdx:0,seqCount:0};
 let TIMES=null; // today's prayer times {Fajr:mins,...}
-let notified={}; // avoid duplicate notifications
+/* Sent-notification guard, keyed "YYYY-MM-DD-Event" and persisted in S so a
+   reload or a second tab can't replay an athan that already fired today. */
 
 function day(k){k=k||todayKey();if(!S.days[k])S.days[k]={prayers:[0,0,0,0,0],morning:false,evening:false,fasting:false,pages:0,adhkar:{morning:[],evening:[]}};
   if(!S.days[k].adhkar)S.days[k].adhkar={morning:[],evening:[]};return S.days[k]}
@@ -1075,7 +1112,7 @@ async function load(){
     const val=localStorage.getItem("wird-data");
     if(val){
       const d=JSON.parse(val);
-      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',...S.settings,...(d.settings||{})}};
+      S={...S,...d,settings:{quranFontSize:'M',quranTheme:'dark',lang:'en',prayerOffsets:{...DEFAULT_PRAYER_OFFSETS},...S.settings,...(d.settings||{})}};
       if(!S.reader) S.reader = {currentPage: 1, furthestPageCounted: S.khatmah || 0, lastReadTimestamp: 0};
     }
   }catch(e){/* first run */}
@@ -1131,6 +1168,23 @@ function computeTimes(date,lat,lng,tz){
     Maghrib:maghrib*60,
     Isha:maghrib*60+90            // Umm al-Qura: Maghrib + 90 min
   };
+}
+function prayerOffsets(){
+  const saved=(S.settings&&S.settings.prayerOffsets)||{},out={};
+  PRAYER_ORDER.forEach(p=>{
+    const v=Number(saved[p]);
+    out[p]=isNaN(v)?DEFAULT_PRAYER_OFFSETS[p]
+      :Math.max(-PRAYER_OFFSET_LIMIT,Math.min(PRAYER_OFFSET_LIMIT,Math.round(v)));
+  });
+  return out;
+}
+/* Every consumer of prayer times goes through here, so the user's calibration
+   reaches the list, the hero countdown, the notifications and the athan
+   trigger from one place. */
+function computeTimesAdjusted(date,lat,lng,tz){
+  const t=computeTimes(date,lat,lng,tz),o=prayerOffsets();
+  PRAYER_ORDER.forEach(p=>{if(typeof t[p]==="number")t[p]+=o[p]});
+  return t;
 }
 const fmt=m=>{m=((m%1440)+1440)%1440;let h=Math.floor(m/60),mm=Math.round(m%60);
   if(mm===60){h++;mm=0}
@@ -1354,24 +1408,37 @@ function playPrayerAthan(msg) {
   currentAthanAudio.onended = stopAthan;
 }
 
+function notifiedStore(){
+  if(!S.notified||typeof S.notified!=="object")S.notified={};
+  return S.notified;
+}
+function alreadyNotified(tag){return !!notifiedStore()[tag]}
+function markNotified(tag){
+  const store=notifiedStore(),tk=todayKey();
+  store[tag]=true;
+  Object.keys(store).forEach(k=>{if(k.indexOf(tk+"-")!==0)delete store[k]});
+  save();
+}
 function notify(title,body,tag,isPrayer){
-  if(notified[tag])return;notified[tag]=true;
+  if(alreadyNotified(tag))return;
+  markNotified(tag);
   if (isPrayer && S.settings.notif) {
      playPrayerAthan(title + " — " + body);
   } else {
      toast(title+" — "+body);
   }
-  if(S.settings.notif&&"Notification"in window&&Notification.permission==="granted"){
-    try{new Notification(title,{body,tag})}catch(e){}
-  }
+  /* No new Notification() here on purpose. The scheduled Cloud Function
+     delivers the OS notification through FCM so it arrives even when the app
+     is closed; firing one locally as well showed every prayer twice whenever
+     the app happened to be open. This path keeps the in-app athan and toast. */
 }
 function reminderTick(){
   if(!TIMES)return;
   const n=nowMins(),tk=todayKey();
   if(S.settings.notifPrayer){
-    [["Fajr","فجر"],["Dhuhr","ظهر"],["Asr","عصر"],["Maghrib","مغرب"],["Isha","عشاء"]].forEach(([en,ar])=>{
+    PRAYER_ORDER.forEach(en=>{
       const t=TIMES[en];
-      if(n>=t&&n<t+2)notify("🕌 "+en+" time","حان وقت صلاة ال"+ar,tk+"-"+en,true);
+      if(n>=t&&n<t+2)notify("🕌 "+en+" time","حان وقت صلاة "+PRAYER_NAMES_AR[en],tk+"-"+en,true);
     });
   }
   if(S.settings.notifAdhkar){
@@ -1561,6 +1628,8 @@ const I18N={
   "set.atEach":     ["At each prayer time","عند كل وقت صلاة","ہر نماز کے وقت","Sa bawat oras ng dasal","En cada oración"],
   "set.adhkarRem":  ["Adhkar reminders","تذكير الأذكار","اذکار کی یاد دہانی","Paalala ng adhkar","Recordatorios de adhkar"],
   "set.athanVoice": ["Athan voice","صوت الأذان","اذان کی آواز","Boses ng athan","Voz del adhan"],
+  "set.prayerAdjust":["Prayer time adjustment","تعديل أوقات الصلاة","نماز کے اوقات کی تنظیم","Pag-aayos ng oras ng dasal","Ajuste de horarios"],
+  "set.prayerAdjustSub":["Fine-tune each prayer to match your local masjid","اضبط كل صلاة لتوافق مسجدك المحلي","ہر نماز کو اپنی مقامی مسجد کے مطابق کریں","I-tugma ang bawat dasal sa lokal na masjid","Ajusta cada oración a tu mezquita local"],
   "set.athanPreviewFailed":["Couldn't play this voice — check your device volume and try again","تعذّر تشغيل هذا الصوت — تحقق من مستوى الصوت وحاول مجدداً","یہ آواز چلائی نہیں جا سکی — والیوم چیک کریں اور دوبارہ کوشش کریں","Hindi na-play ang tinig na ito — suriin ang volume at subukan muli","No se pudo reproducir esta voz — revisa el volumen e inténtalo de nuevo"],
   "set.location":   ["Location & prayer times","الموقع وأوقات الصلاة","مقام اور نماز کے اوقات","Lokasyon at oras ng dasal","Ubicación y horarios"],
   "set.useGps":     ["Use my GPS","استخدام GPS","میرا GPS استعمال کریں","Gamitin ang GPS ko","Usar mi GPS"],
@@ -1881,16 +1950,14 @@ function renderJumuahSaah(){
 function renderHero(){
   if(!TIMES)return;
   const n=nowMins();
-  const order=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
-  const arMap={Fajr:"الفجر",Dhuhr:"الظهر",Asr:"العصر",Maghrib:"المغرب",Isha:"العشاء"};
   let next=null,nextT=0;
-  for(const p of order){if(TIMES[p]>n){next=p;nextT=TIMES[p];break}}
+  for(const p of PRAYER_ORDER){if(TIMES[p]>n){next=p;nextT=TIMES[p];break}}
   if(!next){ // after Isha → tomorrow's Fajr
     const tm=new Date();tm.setDate(tm.getDate()+1);
-    const t2=computeTimes(tm,S.settings.lat,S.settings.lng,S.settings.tz);
+    const t2=computeTimesAdjusted(tm,S.settings.lat,S.settings.lng,S.settings.tz);
     next="Fajr";nextT=t2.Fajr+1440;
   }
-  document.getElementById("npName").textContent=arMap[next];
+  document.getElementById("npName").textContent=PRAYER_NAMES_AR[next];
   document.getElementById("npTime").textContent=fmt(nextT);
   const diff=nextT-n;
   const hh=Math.floor(diff/60),mm=Math.floor(diff%60);
@@ -2035,6 +2102,35 @@ const ATHAN_VOICES = [
 ];
 let currentAthanPreview = null;
 
+function renderPrayerOffsets(){
+  const box=document.getElementById("offsetList");
+  if(!box)return;
+  const o=prayerOffsets();
+  box.innerHTML=PRAYER_ORDER.map(p=>{
+    const v=o[p],shown=(v>0?"+":"")+v+"m";
+    return '<div class="po-row">'
+      +'<div class="po-name"><div class="ar">'+PRAYER_NAMES_AR[p]+'</div>'
+      +'<div class="tm">'+p+' · '+(TIMES?fmt(TIMES[p]):"—")+'</div></div>'
+      +'<div class="po-ctl">'
+      +'<button class="po-btn" data-po-dec="'+p+'">−</button>'
+      +'<div class="po-val'+(v===0?" zero":"")+'">'+shown+'</div>'
+      +'<button class="po-btn" data-po-inc="'+p+'">+</button>'
+      +'</div></div>';
+  }).join("");
+  const step=(p,d)=>{
+    const cur=prayerOffsets();
+    const next=Math.max(-PRAYER_OFFSET_LIMIT,Math.min(PRAYER_OFFSET_LIMIT,cur[p]+d));
+    if(next===cur[p])return;
+    cur[p]=next;
+    S.settings.prayerOffsets=cur;
+    save();
+    refreshTimes();          // recompute so list + hero + notifications all shift
+    renderPrayerOffsets();
+  };
+  box.querySelectorAll("[data-po-dec]").forEach(b=>b.onclick=()=>step(b.dataset.poDec,-1));
+  box.querySelectorAll("[data-po-inc]").forEach(b=>b.onclick=()=>step(b.dataset.poInc,1));
+}
+
 function renderAthanVoices() {
   const v = S.settings.athanVoice || "makkah";
   const list = document.getElementById("athan-voice-list");
@@ -2094,9 +2190,10 @@ function renderSettings(){
     ns.textContent = "";
   }
   renderAthanVoices();
+  renderPrayerOffsets();
 }
 function refreshTimes(){
-  TIMES=computeTimes(new Date(),S.settings.lat,S.settings.lng,S.settings.tz);
+  TIMES=computeTimesAdjusted(new Date(),S.settings.lat,S.settings.lng,S.settings.tz);
   renderHero();renderPrayers();
 }
 
@@ -2304,7 +2401,7 @@ function bind(){
 let currentUser = null;
 window.syncToCloud = function() {
   if (currentUser) {
-    setDoc(doc(db, "users", currentUser.uid), S).catch(e => console.error("Cloud sync failed", e));
+    setDoc(doc(db, "users", currentUser.uid), S, { merge: true }).catch(e => console.error("Cloud sync failed", e));
   }
 };
 

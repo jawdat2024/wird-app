@@ -68,6 +68,22 @@ function computeTimes(date, lat, lng, tz) {
 
 /* ---- helpers ---- */
 const PRAYER_AR = { Fajr: "الفجر", Dhuhr: "الظهر", Asr: "العصر", Maghrib: "المغرب", Isha: "العشاء" };
+const PRAYER_ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+// Must stay in step with DEFAULT_PRAYER_OFFSETS / PRAYER_OFFSET_LIMIT in index.html,
+// otherwise a push would arrive at a different minute than the app displays.
+const DEFAULT_PRAYER_OFFSETS = { Fajr: 2, Dhuhr: 0, Asr: 0, Maghrib: 3, Isha: 0 };
+const PRAYER_OFFSET_LIMIT = 15;
+
+function prayerOffsets(settings) {
+  const saved = (settings && settings.prayerOffsets) || {};
+  const out = {};
+  for (const p of PRAYER_ORDER) {
+    const v = Number(saved[p]);
+    out[p] = isNaN(v) ? DEFAULT_PRAYER_OFFSETS[p]
+      : Math.max(-PRAYER_OFFSET_LIMIT, Math.min(PRAYER_OFFSET_LIMIT, Math.round(v)));
+  }
+  return out;
+}
 
 // Minutes since local midnight at a user's stored UTC offset (tz, in hours),
 // computed from the current UTC instant — equivalent to the client's
@@ -138,13 +154,15 @@ exports.checkPrayerReminders = onSchedule("every 1 minutes", async () => {
 
     const n = localMinutesNow(tz);
     const times = computeTimes(localDateForCalc(tz), settings.lat, settings.lng, tz);
+    const offsets = prayerOffsets(settings);
+    for (const p of PRAYER_ORDER) times[p] += offsets[p];
     let changed = false;
 
     if (settings.notifPrayer) {
       for (const p of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) {
         const t = times[p];
         if (n >= t && n < t + 2 && !state.prayers.includes(p)) {
-          await sendToUser(docSnap.id, tokens, "🕌 " + p + " time", "حان وقت صلاة ال" + PRAYER_AR[p], dateKey + "-" + p);
+          await sendToUser(docSnap.id, tokens, "🕌 " + p + " time", "حان وقت صلاة " + PRAYER_AR[p], dateKey + "-" + p);
           state.prayers.push(p);
           changed = true;
         }
