@@ -16,6 +16,9 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 
 const FIRESTORE_DATABASE_ID = "ai-studio-17c0b662-8370-4add-8de0-a545a80c3fc5";
+// Must match the deployed origin: FCM requires an absolute https URL here, and
+// without it a tapped notification closes without opening the app (see below).
+const SITE_URL = "https://wirdd.netlify.app/";
 
 initializeApp();
 const db = getFirestore(FIRESTORE_DATABASE_ID);
@@ -114,6 +117,25 @@ async function sendToUser(userId, tokensMap, title, body, tag) {
     tokens,
     notification: { title, body },
     data: { tag },
+    // Web push specifics. Keeping a real `notification` payload (rather than
+    // sending data-only) matters most on iOS: the FCM service worker displays
+    // it directly, so the banner does not depend on our own handler running in
+    // a cold-started service worker.
+    webpush: {
+      // A prayer push is only meaningful inside its window. With FCM's default
+      // TTL (4 weeks) a push the device was offline for is delivered whenever
+      // it next connects — which on iOS, where delivery is already deferred,
+      // means an "Asr time" banner can arrive hours after Asr. Expire instead.
+      headers: { TTL: "600", Urgency: "high" },
+      // Carrying the tag here (not only in `data`) lets the SDK-displayed
+      // notification collapse repeats of the same event instead of stacking.
+      // `icon` is used by Android/desktop; iOS always uses the home-screen icon.
+      notification: { title, body, tag, icon: "/public/icon-192.png" },
+      // Without a link, the FCM SDK's own notificationclick handler calls
+      // stopImmediatePropagation() and returns, so the notification closed
+      // without ever opening Wird.
+      fcmOptions: { link: SITE_URL },
+    },
   });
   const dead = [];
   res.responses.forEach((r, i) => {

@@ -1956,6 +1956,8 @@ const I18N={
   "wp.preparingSub":["Until then, the Support page keeps the app running.","حتى ذلك الحين، صفحة الدعم تُبقي التطبيق يعمل.","تب تک، سپورٹ پیج ایپ کو چلاتا رہتا ہے۔","Samantala, ang Support page ang nagpapatakbo ng app.","Mientras tanto, la página de Apoyo mantiene la app funcionando."],
   "wp.subscribeCta":["Get Wird Plus","اشترك في وِرد بلس","وِرد پلس حاصل کریں","Kunin ang Wird Plus","Obtener Wird Plus"],
   "set.notifBlocked":["Notifications are blocked in your browser settings. You'll see in-app reminders instead.","الإشعارات محظورة في إعدادات المتصفح. ستظهر التذكيرات داخل التطبيق بدلاً من ذلك.","اطلاعات آپ کے براؤزر کی ترتیبات میں مسدود ہیں۔ اس کے بجائے ایپ کے اندر یاد دہانیاں نظر آئیں گی۔","Naka-block ang mga notification sa browser settings mo. Makikita mo na lang ang mga paalala sa loob ng app.","Las notificaciones están bloqueadas en tu navegador. Verás recordatorios dentro de la app."],
+  "set.notifIosInstall":["On iPhone, notifications only work once Wird is added to the Home Screen — tap Share, then Add to Home Screen, and open it from there.","على الآيفون، تعمل الإشعارات فقط بعد إضافة وِرد إلى الشاشة الرئيسية — اضغط مشاركة، ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من هناك.","آئی فون پر اطلاعات صرف اُس وقت کام کرتی ہیں جب وِرد کو ہوم اسکرین پر شامل کیا جائے — شیئر دبائیں، پھر Add to Home Screen، اور وہیں سے کھولیں۔","Sa iPhone, gumagana lang ang mga notification kapag naidagdag na ang Wird sa Home Screen — pindutin ang Share, tapos Add to Home Screen, at buksan mula doon.","En iPhone, las notificaciones solo funcionan tras añadir Wird a la pantalla de inicio — pulsa Compartir, luego Añadir a inicio, y ábrelo desde ahí."],
+  "set.notifUnsupported":["This browser can't show notifications. You'll see in-app reminders instead.","هذا المتصفح لا يدعم الإشعارات. ستظهر التذكيرات داخل التطبيق بدلاً من ذلك.","یہ براؤزر اطلاعات نہیں دکھا سکتا۔ اس کے بجائے ایپ کے اندر یاد دہانیاں نظر آئیں گی۔","Hindi makapagpakita ng notification ang browser na ito. Makikita mo na lang ang mga paalala sa loob ng app.","Este navegador no puede mostrar notificaciones. Verás recordatorios dentro de la app."],
   "set.notifOnToast":["Reminders on 🔔","تفعيل التذكيرات 🔔","یاد دہانیاں آن ہیں 🔔","Naka-on ang mga paalala 🔔","Recordatorios activados 🔔"],
   "set.notifOffToast":["Reminders off 🔕","إيقاف التذكيرات 🔕","یاد دہانیاں آف ہیں 🔕","Naka-off ang mga paalala 🔕","Recordatorios desactivados 🔕"],
   "set.gpsUnavailable":["GPS not available here","تحديد الموقع غير متاح هنا","یہاں GPS دستیاب نہیں","Hindi available ang GPS dito","GPS no disponible aquí"],
@@ -2489,7 +2491,11 @@ function renderSettings(){
   document.getElementById("locName").textContent=st.locName;
   document.getElementById("locCoords").textContent=st.lat.toFixed(2)+"°N, "+st.lng.toFixed(2)+"°E · UTC+"+st.tz;
   const ns=document.getElementById("notifStatus");
-  if(st.notif && "Notification" in window && Notification.permission === "denied") {
+  if(st.notif && isIosLike() && !isStandalonePWA()) {
+    ns.textContent = tr("set.notifIosInstall");
+  } else if(st.notif && !("Notification" in window)) {
+    ns.textContent = tr("set.notifUnsupported");
+  } else if(st.notif && "Notification" in window && Notification.permission === "denied") {
     ns.textContent = tr("set.notifBlocked");
   } else {
     ns.textContent = "";
@@ -2791,6 +2797,18 @@ function setupFirebase() {
 }
 
 /* ================= push notifications (FCM) ================= */
+/* iOS only exposes the Notification/Push APIs to a web app that has been
+   added to the Home Screen (iOS 16.4+). In a plain Safari tab there is no
+   Notification object at all, so enabling reminders silently does nothing —
+   these two let Settings say so instead of failing quietly. */
+function isIosLike(){
+  const ua = navigator.userAgent || "";
+  return /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document);
+}
+function isStandalonePWA(){
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+    || navigator.standalone === true;
+}
 let swRegistration = null;
 async function registerPushToken() {
   if (FCM_VAPID_KEY === "PASTE_VAPID_KEY_HERE") return;

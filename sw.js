@@ -25,12 +25,18 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const data = payload.notification || {};
-  const title = data.title || "وِرد";
-  self.registration.showNotification(title, {
-    body: data.body || "",
-    tag: (payload.data && payload.data.tag) || "wird-prayer",
-    data: payload.data || {}
+  // When a push carries a `notification` payload, the FCM SDK has already
+  // called showNotification() itself before invoking this handler (onPush in
+  // @firebase/messaging shows it, then calls onBackgroundMessage). Showing one
+  // here too produced a second, duplicate banner for every prayer. Server
+  // sends a notification payload, so this is now only a fallback for
+  // data-only pushes.
+  if (payload.notification) return;
+  const d = payload.data || {};
+  self.registration.showNotification(d.title || "وِرد", {
+    body: d.body || "",
+    tag: d.tag || "wird-prayer",
+    data: d
   });
 });
 
