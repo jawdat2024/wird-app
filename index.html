@@ -249,6 +249,19 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,29,27,.92);backdro
 .qr-text.animating { opacity: 0; transform: translateY(10px); }
 @media (prefers-reduced-motion:reduce){ .qr-text{transition:none!important; transform:none!important;} }
 .qr-ayah-num { color: var(--brass); font-size: 0.85em; margin: 0 4px; }
+.qr-surah-head {
+  margin: 26px 0 8px; padding: 9px 14px;
+  border: 1px solid var(--brass); border-radius: 12px;
+  background: linear-gradient(180deg, var(--qr-skel-grad, rgba(198,161,91,.05)), transparent);
+  text-align: center; direction: rtl;
+}
+.qr-surah-head:first-child { margin-top: 2px; }
+.qr-surah-ar { font-family: 'Amiri', serif; font-size: 0.8em; color: var(--brass); line-height: 1.6; }
+.qr-surah-en {
+  font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--mist); margin-top: 2px;
+}
+.qr-bismillah { text-align: center; text-align-last: center; margin: 4px 0 10px; }
 .qr-bottom {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
@@ -1296,6 +1309,47 @@ function toArNum(n) {
   return n.toString().replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
 }
 
+/* Surah separation. A new surah begins wherever numberInSurah === 1.
+   The Bismillah is NEVER injected here: in the quran-uthmani edition it is
+   carried at the head of ayah 1's own text, so all we do is find where that
+   prefix ends and put that exact substring on its own line. Nothing is added,
+   removed or rewritten — the characters rendered are the API's, in order.
+   Consequences that fall out of this for free: At-Tawbah, whose text has no
+   Bismillah, can never be given one, and no surah can ever show two. */
+const BISMILLAH_BASE = "بسماللهالرحمنالرحيم";
+function arBaseChar(ch) {
+  const c = ch.charCodeAt(0);
+  if (ch === "ٱ") return "ا";                 // alef wasla -> alef
+  if (ch === "ـ") return "";                       // tatweel
+  if (ch === "ٰ") return "";                       // superscript alef
+  if (c >= 0x0610 && c <= 0x061A) return "";            // honorifics
+  if (c >= 0x064B && c <= 0x065F) return "";            // harakat
+  if (c >= 0x06D6 && c <= 0x06ED) return "";            // small waqf/quranic marks
+  if (/\s/.test(ch)) return "";
+  return ch;
+}
+/* Length of the leading Bismillah in `text`, measured in the ORIGINAL string,
+   or 0 when it does not start with one. Compared on base letters so the
+   Uthmani diacritics never affect the match. */
+function bismillahPrefixLen(text) {
+  let base = "";
+  for (let i = 0; i < text.length; i++) {
+    base += arBaseChar(text[i]);
+    if (base.length > BISMILLAH_BASE.length) return 0;
+    if (!BISMILLAH_BASE.startsWith(base)) return 0;
+    if (base === BISMILLAH_BASE) {
+      /* The base letters match at this index, but the final letter's own
+         diacritics come after it — stop short and the kasra of ٱلرَّحِيمِ
+         would be stranded at the head of the ayah. Take the marks too,
+         stopping at the space that separates the Bismillah from the ayah. */
+      let end = i + 1;
+      while (end < text.length && !/\s/.test(text[end]) && arBaseChar(text[end]) === "") end++;
+      return end;
+    }
+  }
+  return 0;
+}
+
 async function fetchQuranPage(p) {
   const url = `https://api.alquran.cloud/v1/page/${p}/quran-uthmani`;
   try {
@@ -1346,10 +1400,34 @@ async function loadQuranPage(p) {
 
   const ayahs = data.data.ayahs;
   let html = '';
+  let runOpen = false;
+  const openRun = () => { if (!runOpen) { html += '<div class="qr-run">'; runOpen = true; } };
+  const closeRun = () => { if (runOpen) { html += '</div>'; runOpen = false; } };
+
   ayahs.forEach(a => {
-    html += a.text + ' <span class="qr-ayah-num">﴿' + toArNum(a.numberInSurah) + '﴾</span> ';
+    let text = a.text;
+    if (a.numberInSurah === 1) {
+      closeRun();
+      const s = a.surah;
+      html += '<div class="qr-surah-head">'
+            + '<div class="qr-surah-ar">' + s.name + '</div>'
+            + '<div class="qr-surah-en">' + s.englishName + ' · ' + s.number + '</div>'
+            + '</div>';
+      /* Al-Fatiha is left whole: there the Bismillah IS ayah 1 and keeps its
+         verse medallion, so splitting it would strand an empty ayah. */
+      if (s.number !== 1) {
+        const cut = bismillahPrefixLen(text);
+        if (cut) {
+          html += '<div class="qr-bismillah">' + text.slice(0, cut) + '</div>';
+          text = text.slice(cut);
+        }
+      }
+    }
+    openRun();
+    html += text + ' <span class="qr-ayah-num">﴿' + toArNum(a.numberInSurah) + '﴾</span> ';
   });
-  
+  closeRun();
+
   surahTitle.textContent = ayahs[0].surah.name;
   pageInfo.textContent = `PAGE ${p} · JUZ ${ayahs[0].juz}`;
   txtDiv.innerHTML = html;
