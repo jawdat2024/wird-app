@@ -1203,17 +1203,38 @@ const TASBIH_SEQ=[
   {ar:"الْحَمْدُ لِله",en:"Alhamdulillah — Praise be to Allah",n:33},
   {ar:"اللهُ أَكْبَر",en:"Allahu Akbar — Allah is the Greatest",n:34},
 ];
+/* Entries carrying `parts` drive the reading sheet. The Quranic ones reference
+   the text by id and are fetched from the same source the reader uses — no
+   Quranic text is hand-written here. Entries without `parts` have no full text
+   stored in this app yet; their sheet shows the title and counter only, rather
+   than inventing wording. */
 const ADHKAR={
   morning:[
-    {ar:"آية الكرسي",en:"Ayat al-Kursi",n:1},
-    {ar:"الإخلاص والمعوذتين",en:"Al-Ikhlas, Al-Falaq, An-Nas",n:3},
+    {ar:"آية الكرسي",en:"Ayat al-Kursi",n:1,
+     src:"البقرة ٢٥٥ · al-Baqarah 2:255 — حصن المسلم · Hisnul Muslim",
+     parts:[{quran:"2:255",tr:"Āyat al-Kursī",en:"Ayat al-Kursi — al-Baqarah 2:255.",n:1}]},
+    {ar:"الإخلاص والمعوذتين",en:"Al-Ikhlas, Al-Falaq, An-Nas",n:3,
+     src:"حصن المسلم · Hisnul Muslim — ثلاث مرات · three times each",
+     parts:[
+       {quran:"112",tr:"Sūrat al-Ikhlāṣ",en:"Surat al-Ikhlas.",n:3},
+       {quran:"113",tr:"Sūrat al-Falaq",en:"Surat al-Falaq.",n:3},
+       {quran:"114",tr:"Sūrat an-Nās",en:"Surat an-Nas.",n:3}
+     ]},
     {ar:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ",en:"Asbahna wa asbahal-mulku lillah…",n:1},
     {ar:"سَيِّدُ الاسْتِغْفَار",en:"Sayyid al-Istighfar",n:1},
     {ar:"سُبْحَانَ اللهِ وَبِحَمْدِهِ",en:"SubhanAllahi wa bihamdih",n:100},
   ],
   evening:[
-    {ar:"آية الكرسي",en:"Ayat al-Kursi",n:1},
-    {ar:"الإخلاص والمعوذتين",en:"Al-Ikhlas, Al-Falaq, An-Nas",n:3},
+    {ar:"آية الكرسي",en:"Ayat al-Kursi",n:1,
+     src:"البقرة ٢٥٥ · al-Baqarah 2:255 — حصن المسلم · Hisnul Muslim",
+     parts:[{quran:"2:255",tr:"Āyat al-Kursī",en:"Ayat al-Kursi — al-Baqarah 2:255.",n:1}]},
+    {ar:"الإخلاص والمعوذتين",en:"Al-Ikhlas, Al-Falaq, An-Nas",n:3,
+     src:"حصن المسلم · Hisnul Muslim — ثلاث مرات · three times each",
+     parts:[
+       {quran:"112",tr:"Sūrat al-Ikhlāṣ",en:"Surat al-Ikhlas.",n:3},
+       {quran:"113",tr:"Sūrat al-Falaq",en:"Surat al-Falaq.",n:3},
+       {quran:"114",tr:"Sūrat an-Nās",en:"Surat an-Nas.",n:3}
+     ]},
     {ar:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ",en:"Amsayna wa amsal-mulku lillah…",n:1},
     {ar:"أَسْتَغْفِرُ الله",en:"Astaghfirullah",n:100},
   ],
@@ -2589,11 +2610,13 @@ function renderAdhkarColumns(){
   });
 }
 
-/* Morning/evening entries in this app are titles only — there is no full text,
-   transliteration or translation stored for them — so the sheet shows what
-   exists plus the counter rather than inventing wording. */
+/* Any entry that declares `parts` drives the sheet from them — that is how the
+   Quranic morning/evening items get their full text, through the same fetch the
+   after-prayer ones use. Entries with no `parts` have no full text stored yet,
+   so the sheet falls back to the title plus the counter rather than inventing
+   wording. */
 function sheetParts(kind,item){
-  return kind==="after"?item.parts:[{ar:item.ar,tr:"",en:item.en,n:item.n}];
+  return item.parts||[{ar:item.ar,tr:"",en:item.en,n:item.n}];
 }
 
 function openDhikrSheet(kind,idx){
