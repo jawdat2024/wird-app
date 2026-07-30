@@ -140,6 +140,42 @@ header{display:flex;justify-content:space-between;align-items:center;padding:4px
 .switch.on::after{left:22px;background:#fff}
 
 /* Tasbih */
+/* Adhkar: two side-by-side columns. The container follows the document
+   direction, so the session column (first in DOM) sits on the reading-start
+   side — right in Arabic/Urdu, left in English — and the pair mirrors
+   cleanly instead of breaking. */
+.ad-cols{display:flex;gap:10px;align-items:flex-start}
+.ad-col{flex:1 1 0;min-width:0}
+.ad-col-h{padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--edge);text-align:center}
+.ad-col-h .ar{font-family:'Amiri',serif;font-size:15px;color:var(--brass-soft);display:block;line-height:1.4}
+.ad-col-h .ad-col-en{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--mist);font-weight:700}
+.ad-items{display:flex;flex-direction:column;gap:6px}
+.ad-item{
+  display:flex;align-items:center;gap:6px;cursor:pointer;
+  background:var(--deep);border:1px solid var(--edge);border-radius:12px;
+  padding:8px 9px;transition:border-color .15s
+}
+.ad-item:hover{border-color:var(--brass)}
+.ad-item .tk{
+  width:16px;height:16px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--edge);
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent
+}
+.ad-item.done .tk{background:var(--ok);border-color:var(--ok);color:#0B1D1B}
+.ad-item .lbl{flex:1;min-width:0}
+.ad-item .lbl .a{font-family:'Amiri',serif;font-size:14px;color:var(--ivory);display:block;
+  line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl}
+.ad-item .lbl .x{font-size:10px;color:var(--mist);font-weight:700}
+.ad-item.done .lbl .a{color:var(--ok)}
+/* Dhikr reading sheet */
+.ds-body{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;
+  align-items:center;gap:14px;text-align:center}
+.ds-ar{font-family:'Amiri',serif;direction:rtl;font-size:26px;line-height:2;color:var(--ivory);max-width:560px}
+.ds-tr{font-size:13px;color:var(--brass-soft);font-style:italic;line-height:1.6;max-width:460px}
+.ds-en{font-size:13px;color:var(--mist);line-height:1.6;max-width:460px}
+.ds-src{font-size:11px;color:var(--mist);border-top:1px solid var(--edge);padding-top:10px;
+  margin-top:2px;width:100%;max-width:460px}
+.ds-step{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);font-weight:700}
+.ds-done{color:var(--ok);font-size:14px;font-family:'Amiri',serif}
 .tasbih-wrap{text-align:center;padding:8px 0 4px}
 .dhikr-ar{font-family:'Amiri',serif;font-size:30px;color:var(--brass-soft);margin-bottom:2px;direction:rtl}
 .dhikr-en{font-size:12px;color:var(--mist);margin-bottom:16px}
@@ -678,6 +714,18 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
   </div>
 </div>
 
+<div id="dhikr-sheet" class="qr-overlay" style="display:none">
+  <div class="qr-top">
+    <button class="qr-close" id="dsClose">✕</button>
+    <div class="qr-meta">
+      <div class="qr-title" id="dsTitle">—</div>
+      <div class="qr-sub" id="dsSub"></div>
+    </div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="ds-body" id="dsBody"></div>
+</div>
+
 <div id="qibla-overlay" class="qr-overlay" style="display:none">
   <div class="qr-top">
     <button class="qr-close" id="qiblaClose">✕</button>
@@ -775,17 +823,21 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
     </div>
     <div class="card">
       <h2 data-i18n="today.habits">Today's habits</h2>
-      <div class="row">
-        <div><div class="t" data-i18n="today.morning">Morning adhkar</div><div class="d">أذكار الصباح</div></div>
-        <div class="switch" id="sw-morning"></div>
-      </div>
-      <div class="row">
-        <div><div class="t" data-i18n="today.evening">Evening adhkar</div><div class="d">أذكار المساء</div></div>
-        <div class="switch" id="sw-evening"></div>
-      </div>
-      <div class="row">
-        <div><div class="t" data-i18n="today.fasting">Fasting today</div><div class="d" id="fastHint">صيام</div></div>
-        <div class="switch" id="sw-fasting"></div>
+      <div class="ad-cols">
+        <div class="ad-col">
+          <div class="ad-col-h">
+            <span class="ar" id="adSessionAr">أذكار الصباح</span>
+            <span class="ad-col-en" id="adSessionEn" data-i18n="today.morning">Morning adhkar</span>
+          </div>
+          <div class="ad-items" id="adSessionItems"></div>
+        </div>
+        <div class="ad-col">
+          <div class="ad-col-h">
+            <span class="ar">أذكار ما بعد الصلاة</span>
+            <span class="ad-col-en" data-i18n="adhkar.afterPrayerCol">After prayer</span>
+          </div>
+          <div class="ad-items" id="adAfterItems"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -1166,6 +1218,44 @@ const ADHKAR={
     {ar:"أَسْتَغْفِرُ الله",en:"Astaghfirullah",n:100},
   ],
 };
+/* After-prayer adhkar (أذكار ما بعد الصلاة).
+   Non-Quranic items carry their text inline — short, well-attested formulas,
+   each with its source. Quranic items carry only a reference and are fetched
+   from the same Quran source the reader already uses, so no Quranic text is
+   ever hand-written into this file. Every item is a list of `parts`, so the
+   counter walks 33/33/33+1 exactly as the tasbih sequence does. */
+const AFTER_PRAYER=[
+  {id:"istighfar",ar:"الِاسْتِغْفَارُ وَالسَّلَام",en:"Istighfar & Allahumma antas-Salam",
+   src:"صحيح مسلم ٥٩١ · Sahih Muslim 591",
+   parts:[
+     {ar:"أَسْتَغْفِرُ اللَّهَ",tr:"Astaghfirullāh",
+      en:"I seek the forgiveness of Allah.",n:3},
+     {ar:"اللَّهُمَّ أَنْتَ السَّلَامُ، وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+      tr:"Allāhumma antas-salāmu, wa minkas-salāmu, tabārakta yā dhal-jalāli wal-ikrām",
+      en:"O Allah, You are Peace and from You comes peace. Blessed are You, O Owner of majesty and honour.",n:1}
+   ]},
+  {id:"kursi",ar:"آيَةُ الْكُرْسِيّ",en:"Ayat al-Kursi",
+   src:"البقرة ٢٥٥ · al-Baqarah 2:255 — رواه النسائي · an-Nasa'i",
+   parts:[{quran:"2:255",tr:"Āyat al-Kursī",
+      en:"Whoever recites Ayat al-Kursi after every obligatory prayer, nothing stands between him and entering Paradise except death.",n:1}]},
+  {id:"tasbih",ar:"التَّسْبِيحُ وَالتَّهْلِيل",en:"Tasbih 33 · 33 · 33 and tahlil",
+   src:"صحيح مسلم ٥٩٧ · Sahih Muslim 597",
+   parts:[
+     {ar:"سُبْحَانَ اللَّهِ",tr:"Subḥānallāh",en:"Glory be to Allah.",n:33},
+     {ar:"الْحَمْدُ لِلَّهِ",tr:"Alḥamdu lillāh",en:"All praise is for Allah.",n:33},
+     {ar:"اللَّهُ أَكْبَرُ",tr:"Allāhu akbar",en:"Allah is the Greatest.",n:33},
+     {ar:"لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+      tr:"Lā ilāha illallāhu waḥdahu lā sharīka lah, lahul-mulku wa lahul-ḥamdu wa huwa ʿalā kulli shayʾin qadīr",
+      en:"There is no god but Allah alone, with no partner. His is the dominion and His is the praise, and He is able to do all things.",n:1}
+   ]},
+  {id:"muawwidhat",ar:"الْإِخْلَاصُ وَالْمُعَوِّذَتَان",en:"Al-Ikhlas, Al-Falaq, An-Nas",
+   src:"رواه أبو داود ١٥٢٣ · Abu Dawud 1523 — ثلاثاً بعد الفجر والمغرب · ×3 after Fajr & Maghrib",
+   parts:[
+     {quran:"112",tr:"Sūrat al-Ikhlāṣ",en:"Surat al-Ikhlas.",n:1},
+     {quran:"113",tr:"Sūrat al-Falaq",en:"Surat al-Falaq.",n:1},
+     {quran:"114",tr:"Sūrat an-Nās",en:"Surat an-Nas.",n:1}
+   ]}
+];
 const QURAN_PAGES=604;
 const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 
@@ -1181,8 +1271,9 @@ let TIMES=null; // today's prayer times {Fajr:mins,...}
 /* Sent-notification guard, keyed "YYYY-MM-DD-Event" and persisted in S so a
    reload or a second tab can't replay an athan that already fired today. */
 
-function day(k){k=k||todayKey();if(!S.days[k])S.days[k]={prayers:[0,0,0,0,0],morning:false,evening:false,fasting:false,pages:0,adhkar:{morning:[],evening:[]}};
-  if(!S.days[k].adhkar)S.days[k].adhkar={morning:[],evening:[]};return S.days[k]}
+function day(k){k=k||todayKey();if(!S.days[k])S.days[k]={prayers:[0,0,0,0,0],morning:false,evening:false,fasting:false,pages:0,adhkar:{morning:[],evening:[],after:[]}};
+  if(!S.days[k].adhkar)S.days[k].adhkar={morning:[],evening:[],after:[]};
+  if(!S.days[k].adhkar.after)S.days[k].adhkar.after=[];return S.days[k]}
 
 /* ================= storage ================= */
 async function load(){
@@ -1667,7 +1758,10 @@ function renderDate(){
   try{hijri=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{day:"numeric",month:"long"}).format(now)}catch(e){}
   document.getElementById("dateline").innerHTML="<b>"+greg+"</b>"+(hijri?hijri+" هـ":"");
   const wd=now.getDay();
-  document.getElementById("fastHint").textContent=(wd===1||wd===4)?trf("today.sunnahFast",{day:tr(wd===1?"day.monday":"day.thursday")}):tr("today.voluntaryFast");
+  /* The fasting row is no longer on Today, but the hint text and its keys are
+     kept for whatever surfaces fasting next (Ramadan / Mon-Thu tracking). */
+  const fh=document.getElementById("fastHint");
+  if(fh)fh.textContent=(wd===1||wd===4)?trf("today.sunnahFast",{day:tr(wd===1?"day.monday":"day.thursday")}):tr("today.voluntaryFast");
   const h=now.getHours();
   document.getElementById("greet").textContent=h<12?tr("today.greetMorning"):h<17?tr("today.greetAfternoon"):tr("today.greetEvening");
 }
@@ -1939,6 +2033,9 @@ const I18N={
   "adhkar.list":    ["Adhkar checklist","قائمة الأذكار","اذکار کی فہرست","Listahan ng adhkar","Lista de adhkar"],
   "adhkar.morning": ["Morning","الصباح","صبح","Umaga","Mañana"],
   "adhkar.evening": ["Evening","المساء","شام","Gabi","Tarde"],
+  "adhkar.afterPrayerCol":["After prayer","بعد الصلاة","نماز کے بعد","Pagkatapos magdasal","Tras la oración"],
+  "adhkar.step":    ["Step {i} of {n}","الجزء {i} من {n}","حصہ {i} از {n}","Hakbang {i} ng {n}","Paso {i} de {n}"],
+  "adhkar.textOffline":["This text needs internet the first time. Once loaded it stays available offline.","يحتاج هذا النص إلى الإنترنت في المرة الأولى. بعد تحميله يبقى متاحاً دون اتصال.","اس متن کو پہلی بار انٹرنیٹ درکار ہے۔ لوڈ ہونے کے بعد آف لائن دستیاب رہے گا۔","Kailangan ng internet ang tekstong ito sa unang pagkakataon. Kapag na-load na, available na ito offline.","Este texto necesita internet la primera vez. Una vez cargado queda disponible sin conexión."],
   "adhkar.completeToast":["adhkar complete","اكتملت الأذكار","اذکار مکمل ہوگئے","tapos na ang adhkar","adhkar completado"],
   "quran.read":     ["Read","قراءة","پڑھیں","Basahin","Leer"],
   "quran.listen":   ["Listen","استماع","سنیں","Makinig","Escuchar"],
@@ -2367,22 +2464,29 @@ function renderPrayers(){
 }
 function renderSwitches(){
   const t=day();
+  /* The Today habits card now shows adhkar as two tappable columns, so these
+     switches may not be on the page. The fasting flag and its data are kept
+     intact — only its row is gone — so guard rather than assume. */
   [["sw-morning","morning"],["sw-evening","evening"],["sw-fasting","fasting"]].forEach(([id,k])=>{
     const el=document.getElementById(id);
+    if(!el)return;
     el.classList.toggle("on",!!t[k]);
     el.onclick=()=>{t[k]=!t[k];save();renderSwitches();renderAdhkarChips()};
   });
 }
 function renderStreak(){document.getElementById("streakNum").textContent=streak()}
 
+/* Progress of the counter ring, shared by the tasbih tab and the dhikr sheet
+   so there is only ever one implementation of the counter maths. */
+const RING_C=552.9;
+function ringOffset(count,total){return Math.max(0,RING_C-(count/total)*RING_C)}
 function renderTasbih(){
   const seq=TASBIH_SEQ[ui.seqIdx];
   document.getElementById("dhikrAr").textContent=seq.ar;
   document.getElementById("dhikrEn").textContent=seq.en;
   document.getElementById("tCount").textContent=ui.seqCount;
   document.getElementById("tOf").textContent="of "+seq.n;
-  const C=552.9,off=C-(ui.seqCount/seq.n)*C;
-  document.getElementById("ring").setAttribute("stroke-dashoffset",Math.max(0,off));
+  document.getElementById("ring").setAttribute("stroke-dashoffset",ringOffset(ui.seqCount,seq.n));
   document.getElementById("seqDone").style.display="none";
 }
 function tapTasbih(){
@@ -2411,8 +2515,11 @@ function renderAdhkarList(){
     const done=t.adhkar[ui.session].includes(i);
     const row=document.createElement("div");row.className="row";
     row.innerHTML='<div><div class="t ar" style="text-align:left;direction:rtl;display:inline">'+a.ar+'</div><div class="d">'+a.en+" × "+a.n+'</div></div>';
+    row.style.cursor="pointer";
+    row.onclick=()=>openDhikrSheet(ui.session,i);
     const sw=document.createElement("div");sw.className="switch"+(done?" on":"");
-    sw.onclick=()=>{
+    sw.onclick=(e)=>{
+      e.stopPropagation();          // the switch toggles; the row opens the sheet
       const arr=t.adhkar[ui.session];
       const ix=arr.indexOf(i);ix>-1?arr.splice(ix,1):arr.push(i);
       const all=arr.length===list.length;
@@ -2423,6 +2530,160 @@ function renderAdhkarList(){
     row.appendChild(sw);box.appendChild(row);
   });
 }
+/* ================= adhkar columns + reading sheet ================= */
+/* Which session the Today column shows. Evening from Asr onward, mirroring
+   when the evening adhkar are actually recited; falls back to clock time
+   before prayer times are known. */
+function currentAdhkarSession(){
+  const n=nowMins();
+  const asr=TIMES?TIMES.Asr:15*60;
+  return n>=asr?"evening":"morning";
+}
+
+/* Quranic text for the sheet, from the same source and cache the reader uses —
+   never hand-written here. Returns null so the caller can show an error state. */
+async function fetchQuranRef(ref){
+  const url=ref.indexOf(":")>-1
+    ? `https://api.alquran.cloud/v1/ayah/${ref}/quran-uthmani`
+    : `https://api.alquran.cloud/v1/surah/${ref}/quran-uthmani`;
+  try{
+    const cache=await caches.open('quran-v1');
+    let res=await cache.match(url);
+    if(!res){
+      if(!navigator.onLine)throw new Error("offline");
+      res=await fetch(url);
+      if(res.ok)cache.put(url,res.clone());
+    }
+    if(!res.ok)throw new Error("api_error");
+    const j=await res.json();
+    if(j.data.ayahs)return j.data.ayahs.map(a=>a.text).join(" ");
+    return j.data.text;
+  }catch(e){return null}
+}
+
+let dsState=null;
+function adhkarItems(kind){return kind==="after"?AFTER_PRAYER:ADHKAR[kind]}
+function adhkarDoneList(kind){const t=day();return kind==="after"?t.adhkar.after:t.adhkar[kind]}
+
+function renderAdhkarColumns(){
+  const sess=currentAdhkarSession();
+  const arLbl=document.getElementById("adSessionAr");
+  if(!arLbl)return;
+  arLbl.textContent=sess==="morning"?"أذكار الصباح":"أذكار المساء";
+  const enLbl=document.getElementById("adSessionEn");
+  enLbl.setAttribute("data-i18n",sess==="morning"?"today.morning":"today.evening");
+  enLbl.textContent=tr(sess==="morning"?"today.morning":"today.evening");
+  [["adSessionItems",sess],["adAfterItems","after"]].forEach(([boxId,kind])=>{
+    const box=document.getElementById(boxId);box.innerHTML="";
+    const list=adhkarItems(kind),done=adhkarDoneList(kind);
+    list.forEach((a,i)=>{
+      const el=document.createElement("div");
+      el.className="ad-item"+(done.includes(i)?" done":"");
+      const count=kind==="after"?a.parts.reduce((s,p)=>s+p.n,0):a.n;
+      el.innerHTML='<div class="tk">✓</div><div class="lbl">'
+        +'<span class="a">'+a.ar+'</span>'
+        +'<span class="x">× '+count+'</span></div>';
+      el.onclick=()=>openDhikrSheet(kind,i);
+      box.appendChild(el);
+    });
+  });
+}
+
+/* Morning/evening entries in this app are titles only — there is no full text,
+   transliteration or translation stored for them — so the sheet shows what
+   exists plus the counter rather than inventing wording. */
+function sheetParts(kind,item){
+  return kind==="after"?item.parts:[{ar:item.ar,tr:"",en:item.en,n:item.n}];
+}
+
+function openDhikrSheet(kind,idx){
+  const item=adhkarItems(kind)[idx];
+  dsState={kind,idx,item,parts:sheetParts(kind,item),partIdx:0,count:0,loading:false,error:false};
+  document.getElementById("dsTitle").textContent=item.ar;
+  document.getElementById("dsSub").textContent=item.en;
+  document.getElementById("dhikr-sheet").style.display="flex";
+  renderDhikrSheet();
+  ensurePartText();   // a Quranic first part still needs fetching
+}
+function closeDhikrSheet(){
+  dsState=null;
+  document.getElementById("dhikr-sheet").style.display="none";
+}
+
+async function ensurePartText(){
+  const p=dsState.parts[dsState.partIdx];
+  if(!p.quran||p._text!==undefined)return;
+  dsState.loading=true;renderDhikrSheet();
+  const txt=await fetchQuranRef(p.quran);
+  if(!dsState)return;                       // sheet closed while fetching
+  p._text=txt;
+  dsState.loading=false;dsState.error=!txt;
+  renderDhikrSheet();
+}
+
+function renderDhikrSheet(){
+  if(!dsState)return;
+  const box=document.getElementById("dsBody");
+  const p=dsState.parts[dsState.partIdx];
+  const multi=dsState.parts.length>1;
+  if(dsState.loading){
+    box.innerHTML='<div class="qr-skeleton" style="width:100%"><div class="qr-skel-line"></div>'
+      +'<div class="qr-skel-line"></div><div class="qr-skel-line"></div></div>';
+    return;
+  }
+  if(dsState.error){
+    box.innerHTML='<div class="ds-en">'+tr("adhkar.textOffline")+'</div>'
+      +'<button class="btn" id="dsRetry">'+tr("common.retry")+'</button>';
+    document.getElementById("dsRetry").onclick=()=>{
+      delete dsState.parts[dsState.partIdx]._text;dsState.error=false;ensurePartText();
+    };
+    return;
+  }
+  const arabic=p.quran?(p._text||""):p.ar;
+  let h="";
+  if(multi)h+='<div class="ds-step">'+trf("adhkar.step",{i:dsState.partIdx+1,n:dsState.parts.length})+'</div>';
+  h+='<div class="ds-ar">'+arabic+'</div>';
+  if(p.tr)h+='<div class="ds-tr">'+p.tr+'</div>';
+  if(p.en)h+='<div class="ds-en">'+p.en+'</div>';
+  h+='<div class="tasbih" id="dsTap" style="cursor:pointer">'
+    +'<svg width="150" height="150" viewBox="0 0 190 190">'
+    +'<circle cx="95" cy="95" r="88" fill="none" stroke="#1E4A44" stroke-width="7"/>'
+    +'<circle id="dsRing" cx="95" cy="95" r="88" fill="none" stroke="#C6A15B" stroke-width="7"'
+    +' stroke-linecap="round" stroke-dasharray="552.9" stroke-dashoffset="'+ringOffset(dsState.count,p.n)+'"/>'
+    +'</svg><div class="count">'+dsState.count+'</div><div class="of">of '+p.n+'</div></div>';
+  if(dsState.finished)h+='<div class="ds-done">✓ '+tr("adhkar.completeToast")+' — تقبّل الله</div>';
+  if(dsState.item.src)h+='<div class="ds-src">'+dsState.item.src+'</div>';
+  box.innerHTML=h;
+  document.getElementById("dsTap").onclick=tapDhikrSheet;
+}
+
+function tapDhikrSheet(){
+  if(!dsState||dsState.finished)return;
+  const p=dsState.parts[dsState.partIdx];
+  dsState.count++;
+  if(navigator.vibrate)navigator.vibrate(8);
+  if(dsState.count>=p.n){
+    if(dsState.partIdx<dsState.parts.length-1){
+      dsState.partIdx++;dsState.count=0;
+      renderDhikrSheet();ensurePartText();return;
+    }
+    dsState.finished=true;
+    markDhikrDone(dsState.kind,dsState.idx);
+  }
+  renderDhikrSheet();
+}
+
+function markDhikrDone(kind,idx){
+  const t=day(),arr=adhkarDoneList(kind);
+  if(!arr.includes(idx))arr.push(idx);
+  if(kind!=="after"){
+    const all=arr.length===ADHKAR[kind].length;
+    if(all&&!t[kind]){t[kind]=true;
+      toast("✓ "+tr(kind==="morning"?"adhkar.morning":"adhkar.evening")+" "+tr("adhkar.completeToast")+" — تقبّل الله")}
+  }
+  save();renderAdhkarColumns();renderSwitches();renderAdhkarChips();
+}
+
 function renderQuran(){
   const td=day();
   document.getElementById("pgVal").textContent=td.pages;
@@ -2629,6 +2890,7 @@ function bind(){
   document.getElementById("tasbih").onclick=tapTasbih;
   document.getElementById("tReset").onclick=()=>{ui.seqIdx=0;ui.seqCount=0;renderTasbih()};
   document.getElementById("tSkip").onclick=()=>{ui.seqIdx=(ui.seqIdx+1)%TASBIH_SEQ.length;ui.seqCount=0;renderTasbih()};
+  document.getElementById("dsClose").onclick=closeDhikrSheet;
   document.getElementById("chip-morning").onclick=()=>{ui.session="morning";renderAdhkarChips()};
   document.getElementById("chip-evening").onclick=()=>{ui.session="evening";renderAdhkarChips()};
   
@@ -2850,7 +3112,7 @@ function setupFirebase() {
           if (initialAuthFired) {
             renderDate();refreshTimes();
             applyI18n();renderLangPicker();
-            renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderJumuah();
+            renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderAdhkarColumns();renderJumuah();
             renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();
           }
         } else {
@@ -3396,7 +3658,7 @@ if ('mediaSession' in navigator) {
 
   applyI18n();renderLangPicker();
   renderDate();refreshTimes();
-  renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderJumuah();
+  renderStreak();renderWeek();renderQiblaEntry();renderSwitches();renderAdhkarColumns();renderJumuah();
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
   document.getElementById("loading").style.display="none";
   document.getElementById("main").style.display="block";
