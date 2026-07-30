@@ -2335,16 +2335,29 @@ function currentPrayer(){
   o.forEach((p,i)=>{if(n>=TIMES[p])cur=i});
   return cur;
 }
+/* The prayer to act on next: scan forward from the current window and take the
+   first one not yet marked done, so the highlight advances as prayers are
+   ticked off. Earlier missed prayers are deliberately not pulled back — at 1pm
+   Fajr is not "next" — but their rows stay unchecked and tappable. Returns -1
+   once nothing is left for today. */
+function nextPrayerIndex(){
+  const td=day(),cur=currentPrayer();
+  for(let i=Math.max(cur,0);i<5;i++) if(!td.prayers[i]) return i;
+  return -1;
+}
+let lastNextIdx=null;
 function renderPrayers(){
   const td=day();const box=document.getElementById("prayerList");box.innerHTML="";
   const cur=currentPrayer();
+  const nxt=nextPrayerIndex();
+  lastNextIdx=nxt;
   const en=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
   PRAYERS.forEach((p,i)=>{
     const row=document.createElement("div");
-    row.className="pt-row"+(td.prayers[i]?" done":"")+(i===cur&&!td.prayers[i]?" now":"");
+    row.className="pt-row"+(td.prayers[i]?" done":"")+(i===nxt?" now":"");
     row.innerHTML='<div class="check">✓</div>'+
       '<div class="nm"><span class="a ar">'+p[0]+'</span> <span class="e">'+p[1]+'</span></div>'+
-      (i===cur&&!td.prayers[i]?'<span class="badge">NOW</span>':'')+
+      (i===nxt?'<span class="badge">'+(i===cur?'NOW':'NEXT')+'</span>':'')+
       '<div class="tm">'+(TIMES?fmt(TIMES[en[i]]):"—")+'</div>';
     row.onclick=()=>{td.prayers[i]=td.prayers[i]?0:1;save();renderPrayers();renderStreak();renderWeek();
       if(td.prayers.every(Boolean))toast("🔥 "+tr("today.allDoneToast"))};
@@ -3387,7 +3400,11 @@ if ('mediaSession' in navigator) {
   renderTasbih();renderAdhkarChips();renderQuran();renderSadaqah();renderSettings();bind();
   document.getElementById("loading").style.display="none";
   document.getElementById("main").style.display="block";
-  setInterval(()=>{renderHero();reminderTick();renderJumuahSaah()},20000); // live countdown + reminders
+  setInterval(()=>{renderHero();reminderTick();renderJumuahSaah();
+    // Advance the NOW/NEXT highlight when a prayer time passes, but only
+    // rebuild the rows when the target actually changes.
+    if(nextPrayerIndex()!==lastNextIdx)renderPrayers();
+  },20000); // live countdown + reminders
   setInterval(renderDate,60000);
   
   if ('serviceWorker' in navigator) {
