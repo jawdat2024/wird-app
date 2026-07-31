@@ -166,6 +166,13 @@ header{display:flex;justify-content:space-between;align-items:center;padding:4px
   flex-shrink:0;font-size:11px;font-weight:700;color:var(--brass-soft);
   background:rgba(198,161,91,.12);border-radius:8px;padding:4px 9px
 }
+/* Jumu'ah tap-through screen */
+.js-body{flex:1;overflow-y:auto;padding:26px 18px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;text-align:center}
+.js-ayah{font-family:'Amiri',serif;direction:rtl;font-size:30px;line-height:2.1;
+  color:var(--ivory);max-width:600px}
+.js-play{font-size:14px;padding:12px 26px}
+.js-note{font-size:12px;color:var(--mist);line-height:1.6;max-width:420px}
 /* Dhikr reading sheet */
 .ds-body{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;
   align-items:center;gap:14px;text-align:center}
@@ -711,6 +718,23 @@ html[dir="rtl"] .hc-nav-btn { transform: scaleX(-1); }
       Hijri dates follow the Umm al-Qura calendar and may differ by a day depending on local moon sighting.
       <span class="ar">التواريخ الهجرية بحسب تقويم أم القرى، وقد تختلف يوماً حسب رؤية الهلال محلياً.</span>
     </div>
+  </div>
+</div>
+
+<div id="jumuah-screen" class="qr-overlay" style="display:none">
+  <div class="qr-top">
+    <button class="qr-close" id="jsClose">✕</button>
+    <div class="qr-meta">
+      <div class="qr-title">سُورَةُ الْجُمُعَة</div>
+      <div class="qr-sub">AL-JUMU'AH · 62:9</div>
+    </div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="js-body">
+    <div class="js-ayah" id="jsAyah"></div>
+    <button class="btn gold js-play" id="jsPlay" data-i18n="jumuah.play">Play the ayah</button>
+    <audio id="jsAudio" preload="auto" src="/public/audio/jumuah-62-9.mp3"></audio>
+    <div class="js-note" data-i18n="jumuah.note">Recitation of Surat al-Jumu'ah, ayah 9.</div>
   </div>
 </div>
 
@@ -2047,6 +2071,9 @@ const I18N={
   "adhkar.list":    ["Adhkar checklist","قائمة الأذكار","اذکار کی فہرست","Listahan ng adhkar","Lista de adhkar"],
   "adhkar.morning": ["Morning","الصباح","صبح","Umaga","Mañana"],
   "adhkar.evening": ["Evening","المساء","شام","Gabi","Tarde"],
+  "jumuah.play":    ["Play the ayah","تشغيل الآية","آیت چلائیں","I-play ang ayah","Reproducir la aleya"],
+  "jumuah.loading": ["Loading the ayah…","جارٍ تحميل الآية…","آیت لوڈ ہو رہی ہے…","Nilo-load ang ayah…","Cargando la aleya…"],
+  "jumuah.note":    ["Recitation of Surat al-Jumu'ah, ayah 9.","تلاوة سورة الجمعة، الآية ٩.","سورہ الجمعہ، آیت ۹ کی تلاوت۔","Pagbigkas ng Surat al-Jumu'ah, ayah 9.","Recitación de Surat al-Yumu'a, aleya 9."],
   "adhkar.afterPrayerCol":["After prayer","بعد الصلاة","نماز کے بعد","Pagkatapos magdasal","Tras la oración"],
   "adhkar.step":    ["Step {i} of {n}","الجزء {i} من {n}","حصہ {i} از {n}","Hakbang {i} ng {n}","Paso {i} de {n}"],
   "adhkar.textOffline":["This text needs internet the first time. Once loaded it stays available offline.","يحتاج هذا النص إلى الإنترنت في المرة الأولى. بعد تحميله يبقى متاحاً دون اتصال.","اس متن کو پہلی بار انٹرنیٹ درکار ہے۔ لوڈ ہونے کے بعد آف لائن دستیاب رہے گا۔","Kailangan ng internet ang tekstong ito sa unang pagkakataon. Kapag na-load na, available na ito offline.","Este texto necesita internet la primera vez. Una vez cargado queda disponible sin conexión."],
@@ -2620,6 +2647,34 @@ function sheetParts(kind,item){
   return item.parts||[{ar:item.ar,tr:"",en:item.en,n:item.n}];
 }
 
+/* ---- Jumu'ah tap-through screen ----
+   Opened by tapping the Friday notification (/jumuah, or an OPEN_JUMUAH
+   message when a tab is already focused). The ayah text is fetched from the
+   same Quran source the reader uses — never hand-written here. */
+async function openJumuahScreen(){
+  const scr=document.getElementById("jumuah-screen");
+  if(!scr)return;
+  scr.style.display="flex";
+  const box=document.getElementById("jsAyah");
+  if(!box.dataset.loaded){
+    box.textContent=tr("jumuah.loading");
+    const txt=await fetchQuranRef("62:9");
+    if(txt){box.textContent=txt;box.dataset.loaded="1"}
+    else box.textContent=tr("adhkar.textOffline");
+  }
+  /* The notification tap counts as a user gesture, so this is normally
+     allowed. It still fails on some iOS versions when the gesture does not
+     propagate through the service worker — the play button below is always
+     visible for exactly that case, never hidden on success. */
+  const a=document.getElementById("jsAudio");
+  try{a.currentTime=0;await a.play()}catch(e){}
+}
+function closeJumuahScreen(){
+  const a=document.getElementById("jsAudio");
+  try{a.pause();a.currentTime=0}catch(e){}
+  document.getElementById("jumuah-screen").style.display="none";
+}
+
 function openDhikrSheet(kind,idx){
   const item=adhkarItems(kind)[idx];
   dsState={kind,idx,item,parts:sheetParts(kind,item),partIdx:0,count:0,loading:false,error:false};
@@ -2914,6 +2969,11 @@ function bind(){
   document.getElementById("tasbih").onclick=tapTasbih;
   document.getElementById("tReset").onclick=()=>{ui.seqIdx=0;ui.seqCount=0;renderTasbih()};
   document.getElementById("tSkip").onclick=()=>{ui.seqIdx=(ui.seqIdx+1)%TASBIH_SEQ.length;ui.seqCount=0;renderTasbih()};
+  document.getElementById("jsClose").onclick=closeJumuahScreen;
+  document.getElementById("jsPlay").onclick=()=>{
+    const a=document.getElementById("jsAudio");
+    a.currentTime=0;a.play().catch(()=>{});
+  };
   document.getElementById("dsClose").onclick=closeDhikrSheet;
   document.getElementById("chip-morning").onclick=()=>{ui.session="morning";renderAdhkarChips()};
   document.getElementById("chip-evening").onclick=()=>{ui.session="evening";renderAdhkarChips()};
@@ -3693,7 +3753,17 @@ if ('mediaSession' in navigator) {
   },20000); // live countdown + reminders
   setInterval(renderDate,60000);
   
+  /* Tap-through entry. Netlify rewrites /jumuah to index.html, so the path is
+     the signal; the URL is then tidied back to / so a refresh does not reopen
+     the screen. An already-focused tab is told via postMessage instead. */
+  if (location.pathname.replace(/\/$/, '') === '/jumuah') {
+    openJumuahScreen();
+    try { history.replaceState(null, '', '/'); } catch (e) {}
+  }
   if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'OPEN_JUMUAH') openJumuahScreen();
+    });
     navigator.serviceWorker.register('/sw.js').then((reg) => {
       swRegistration = reg;
       registerPushToken();

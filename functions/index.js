@@ -76,6 +76,16 @@ const PRAYER_ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 // otherwise a push would arrive at a different minute than the app displays.
 const DEFAULT_PRAYER_OFFSETS = { Fajr: 2, Dhuhr: 0, Asr: 0, Maghrib: 3, Isha: 0 };
 const PRAYER_OFFSET_LIMIT = 15;
+/* Jumu'ah. The tone is a 25s recitation of al-Jumu'ah 62:9; tapping the
+   notification opens /jumuah, which plays the full ayah. iOS web push always
+   uses the system sound — that is a platform limit, not something to work
+   around, which is why the audio lives on the tap-through screen. */
+const JUMUAH_OPTS = {
+  kind: "jumuah",
+  sound: "/public/audio/jumuah-tone.mp3",
+  androidSound: "jumuah-tone",
+  link: SITE_URL + "jumuah",
+};
 
 function prayerOffsets(settings) {
   const saved = (settings && settings.prayerOffsets) || {};
@@ -110,13 +120,14 @@ function localDateForCalc(tz) {
   return new Date(now.getTime() + tz * 3600 * 1000);
 }
 
-async function sendToUser(userId, tokensMap, title, body, tag) {
+async function sendToUser(userId, tokensMap, title, body, tag, opts) {
   const tokens = Object.keys(tokensMap || {});
   if (!tokens.length) return;
+  const o = opts || {};
   const res = await messaging.sendEachForMulticast({
     tokens,
     notification: { title, body },
-    data: { tag },
+    data: o.kind ? { tag, kind: o.kind } : { tag },
     // Web push specifics. Keeping a real `notification` payload (rather than
     // sending data-only) matters most on iOS: the FCM service worker displays
     // it directly, so the banner does not depend on our own handler running in
@@ -130,12 +141,23 @@ async function sendToUser(userId, tokensMap, title, body, tag) {
       // Carrying the tag here (not only in `data`) lets the SDK-displayed
       // notification collapse repeats of the same event instead of stacking.
       // `icon` is used by Android/desktop; iOS always uses the home-screen icon.
-      notification: { title, body, tag, icon: "/public/icon-192.png" },
+      // `sound` is in the Notification spec but no browser implements it today,
+      // so it is carried for forward-compatibility, not relied on.
+      notification: Object.assign(
+        { title, body, tag, icon: "/public/icon-192.png" },
+        o.sound ? { sound: o.sound } : {}
+      ),
       // Without a link, the FCM SDK's own notificationclick handler calls
       // stopImmediatePropagation() and returns, so the notification closed
       // without ever opening Wird.
-      fcmOptions: { link: SITE_URL },
+      fcmOptions: { link: o.link || SITE_URL },
     },
+    // Only consumed by a native Android app via FCM; a PWA on Android is
+    // served by the webpush block above. Carried so the tone is already wired
+    // if a native build is ever added.
+    android: o.androidSound
+      ? { notification: { sound: o.androidSound, channelId: "wird-jumuah" } }
+      : undefined,
   });
   const dead = [];
   res.responses.forEach((r, i) => {
@@ -181,10 +203,20 @@ exports.checkPrayerReminders = onSchedule("every 1 minutes", async () => {
     let changed = false;
 
     if (settings.notifPrayer) {
+      // Friday in the user's own offset. Jumu'ah takes the place of Dhuhr
+      // rather than arriving alongside it, so nobody gets two at one minute.
+      const isFriday = localDateForCalc(tz).getUTCDay() === 5;
       for (const p of ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]) {
         const t = times[p];
         if (n >= t && n < t + 2 && !state.prayers.includes(p)) {
-          await sendToUser(docSnap.id, tokens, "🕌 " + p + " time", "حان وقت صلاة " + PRAYER_AR[p], dateKey + "-" + p);
+          const jumuah = isFriday && p === "Dhuhr";
+          await sendToUser(
+            docSnap.id, tokens,
+            jumuah ? "🕌 Jumu'ah" : "🕌 " + p + " time",
+            jumuah ? "حان وقت صلاة الجمعة" : "حان وقت صلاة " + PRAYER_AR[p],
+            dateKey + (jumuah ? "-jumuah" : "-" + p),
+            jumuah ? JUMUAH_OPTS : undefined
+          );
           state.prayers.push(p);
           changed = true;
         }

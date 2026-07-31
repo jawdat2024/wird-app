@@ -7,8 +7,37 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-self.addEventListener("install", () => self.skipWaiting());
+/* Jumu'ah audio, precached on install so the tap-through screen starts
+   instantly and works offline. Netlify serves this repo's root, so these live
+   under /public/ — same convention as the athan files. The .caf is iOS-native
+   only and is deliberately not cached: web push cannot use it. */
+const JUMUAH_CACHE = "wird-audio-v1";
+const JUMUAH_AUDIO = [
+  "/public/audio/jumuah-62-9.mp3",
+  "/public/audio/jumuah-tone.mp3"
+];
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  // Precaching must never block activation — a failed fetch here would leave
+  // the worker stuck and take the update toast down with it.
+  event.waitUntil(
+    caches.open(JUMUAH_CACHE)
+      .then((c) => c.addAll(JUMUAH_AUDIO))
+      .catch(() => {})
+  );
+});
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+/* Serve the precached audio offline. Everything else falls through to the
+   network untouched. */
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (!JUMUAH_AUDIO.includes(url.pathname)) return;
+  event.respondWith(
+    caches.match(event.request).then((hit) => hit || fetch(event.request))
+  );
+});
 
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
@@ -42,10 +71,24 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  /* Jumu'ah notifications land on /jumuah, which plays the ayah. For pushes
+     carrying a `notification` payload the FCM SDK handles the click first
+     (using webpush.fcmOptions.link) and stops propagation, so this runs only
+     for data-only pushes — it has to route them the same way. */
+  const d = event.notification.data || {};
+  const isJumuah = d.kind === "jumuah" || /(^|-)jumuah$/.test(d.tag || "");
+  const target = isJumuah ? "/jumuah" : "/";
   event.waitUntil(
     self.clients.matchAll({type: "window", includeUncontrolled: true}).then((list) => {
-      for (const c of list) if ("focus" in c) return c.focus();
-      if (self.clients.openWindow) return self.clients.openWindow("/");
+      for (const c of list) {
+        if ("focus" in c) {
+          // Tell the page which screen to show; focusing alone would leave a
+          // already-open tab sitting on whatever it was displaying.
+          if (isJumuah && "postMessage" in c) c.postMessage({type: "OPEN_JUMUAH"});
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
     })
   );
 });

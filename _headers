@@ -9,3 +9,6 @@
 
 /public/assets/athan/*
   Cache-Control: public, max-age=3600, must-revalidate
+
+/public/audio/*
+  Cache-Control: public, max-age=31536000, immutable

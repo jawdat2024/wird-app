@@ -1,0 +1,3 @@
+# Tap-through target for the Jumu'ah notification. Narrow on purpose:
+# a catch-all would mask genuine 404s for the static assets.
+/jumuah  /index.html  200
